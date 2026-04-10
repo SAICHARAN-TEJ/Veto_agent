@@ -1,4 +1,14 @@
 import React from 'react';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+import Divider from '@mui/material/Divider';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 export function VetoOverlay({ vetoed, reason, failedOn, ticketRefs, suggestion, confidence, onUseSuggestion }) {
   if (!vetoed) return null;
@@ -11,39 +21,106 @@ export function VetoOverlay({ vetoed, reason, failedOn, ticketRefs, suggestion, 
   };
 
   return (
-    <div className="veto-overlay">
-      <div className="veto-alert">
-        <div className="veto-header">
-          <div className="veto-icon">!</div>
-          <strong>Memory Conflict: Solution already failed</strong>
-        </div>
-        
-        <p className="veto-reason">{reason}</p>
- 
-        <div className="veto-meta">
-          <span className="meta-badge">Confidence: {Math.round(confidence * 100)}%</span>
-          <span className="meta-badge">Failure Date: {failedOn.join(', ')}</span>
-          {ticketRefs && ticketRefs.length > 0 && (
-            <span className="meta-badge">Ref: {ticketRefs.map(t => '#' + t).join(', ')}</span>
+    <Stack spacing={2}>
+      {/* Veto Alert */}
+      <Alert
+        severity="error"
+        sx={{
+          bgcolor: 'rgba(217, 79, 79, 0.08)',
+          border: '1px solid',
+          borderColor: 'error.main',
+          borderRadius: '12px',
+          p: 2,
+          '.MuiAlert-icon': {
+            color: 'error.main',
+          },
+        }}
+        icon={<span style={{ fontSize: '1.5rem', fontWeight: 700 }}>!</span>}
+      >
+        <AlertTitle sx={{ fontWeight: 700, mb: 0.5 }}>
+          Memory Conflict: Solution Already Failed
+        </AlertTitle>
+        <Typography variant="body2" color="text.primary" sx={{ mb: 1.5 }}>
+          {reason}
+        </Typography>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+          <Chip
+            label={`Confidence: ${Math.round(confidence * 100)}%`}
+            size="small"
+            sx={{ bgcolor: 'rgba(217,79,79,0.2)', color: 'error.main', fontSize: '0.7rem' }}
+          />
+          {failedOn && failedOn.length > 0 && (
+            <Chip
+              label={`Failure Date: ${failedOn.join(', ')}`}
+              size="small"
+              sx={{ bgcolor: 'rgba(217,79,79,0.2)', color: 'error.main', fontSize: '0.7rem' }}
+            />
           )}
-        </div>
-      </div>
- 
+          {ticketRefs && ticketRefs.length > 0 && (
+            <Chip
+              label={`Ref: ${ticketRefs.map(t => '#' + t).join(', ')}`}
+              size="small"
+              sx={{ bgcolor: 'rgba(217,79,79,0.2)', color: 'error.main', fontSize: '0.7rem' }}
+            />
+          )}
+        </Stack>
+      </Alert>
+
+      {/* Alternative Suggestion */}
       {suggestion && (
-        <div className="veto-suggestion">
-          <div className="suggestion-header">
-            <strong>AI Suggested Alternative</strong>
-          </div>
-          
-          <h4>{suggestion.solution_name}</h4>
-          <p className="suggestion-steps">{suggestion.steps}</p>
-          <p className="suggestion-reasoning">{suggestion.reasoning}</p>
- 
-          <button className="btn-use-suggestion" onClick={handleUseSuggestion}>
-            Use this suggestion
-          </button>
-        </div>
+        <Paper
+          sx={{
+            p: 2.5,
+            bgcolor: 'rgba(76, 175, 125, 0.08)',
+            border: '1px solid',
+            borderColor: 'success.main',
+            borderRadius: '12px',
+            boxShadow: 'none',
+          }}
+          elevation={0}
+        >
+          <Stack spacing={1.5}>
+            <Box>
+              <Typography variant="overline" color="success.main" sx={{ display: 'block', mb: 0.5, fontWeight: 700 }}>
+                AI Suggested Alternative
+              </Typography>
+              <Typography variant="h6" color="text.primary" sx={{ fontWeight: 700 }}>
+                {suggestion.solution_name}
+              </Typography>
+            </Box>
+
+            <Typography variant="body2" color="text.primary">
+              {suggestion.steps}
+            </Typography>
+
+            <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+              {suggestion.reasoning}
+            </Typography>
+
+            <Divider sx={{ my: 0.5 }} />
+
+            <Button
+              variant="contained"
+              onClick={handleUseSuggestion}
+              startIcon={<ContentCopyIcon sx={{ fontSize: '16px !important' }} />}
+              sx={{
+                bgcolor: 'success.main',
+                color: 'background.default',
+                fontWeight: 700,
+                fontSize: '0.8125rem',
+                textTransform: 'none',
+                borderRadius: '8px',
+                py: 1.2,
+                '&:hover': {
+                  bgcolor: 'success.dark',
+                },
+              }}
+            >
+              Use this suggestion
+            </Button>
+          </Stack>
+        </Paper>
       )}
-    </div>
+    </Stack>
   );
 }

@@ -1,12 +1,12 @@
-import React from 'react';
+﻿import React from 'react';
+import Box from '@mui/material/Box';
 import { SupportConsole } from './components/SupportConsole';
-import './styles/index.css';
 
 function App() {
   return (
-    <div className="App">
+    <Box sx={{ height: '100vh', overflow: 'hidden', bgcolor: 'background.default' }}>
       <SupportConsole />
-    </div>
+    </Box>
   );
 }
 

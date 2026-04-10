@@ -1,0 +1,163 @@
+﻿import { createTheme } from '@mui/material/styles';
+
+const theme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#C4956A',
+      light: '#D4A87D',
+      dark: '#8B6A4A',
+      contrastText: '#0B0F15',
+    },
+    secondary: {
+      main: '#4CAF7D',
+      light: '#6BC498',
+      dark: '#367A58',
+      contrastText: '#0B0F15',
+    },
+    error: {
+      main: '#D94F4F',
+      light: '#E57373',
+      dark: '#A93B3B',
+    },
+    warning: {
+      main: '#E5A84B',
+      light: '#EDBE73',
+      dark: '#B88535',
+    },
+    success: {
+      main: '#4CAF7D',
+      light: '#6BC498',
+      dark: '#367A58',
+    },
+    text: {
+      primary: '#E8E4DF',
+      secondary: '#9BA3AE',
+      disabled: '#5E6773',
+    },
+    background: {
+      default: '#0B0F15',
+      paper: '#141920',
+    },
+    divider: '#262D37',
+    grey: {
+      50: '#E8E4DF',
+      100: '#C9CDD3',
+      200: '#9BA3AE',
+      300: '#7A8290',
+      400: '#5E6773',
+      500: '#3A4250',
+      600: '#262D37',
+      700: '#1C2129',
+      800: '#141920',
+      900: '#0B0F15',
+    },
+  },
+  typography: {
+    fontFamily: "'Source Sans 3', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontSize: 14,
+    fontWeightLight: 300,
+    fontWeightRegular: 400,
+    fontWeightMedium: 600,
+    fontWeightBold: 700,
+    h1: {
+      fontFamily: "'Manrope', sans-serif",
+      fontWeight: 800,
+      fontSize: '2.25rem',
+      lineHeight: 1.2,
+      letterSpacing: '-0.02em',
+    },
+    h2: {
+      fontFamily: "'Manrope', sans-serif",
+      fontWeight: 700,
+      fontSize: '1.75rem',
+      lineHeight: 1.25,
+      letterSpacing: '-0.01em',
+    },
+    h3: {
+      fontFamily: "'Manrope', sans-serif",
+      fontWeight: 700,
+      fontSize: '1.25rem',
+      lineHeight: 1.3,
+    },
+    h4: {
+      fontFamily: "'Manrope', sans-serif",
+      fontWeight: 600,
+      fontSize: '1rem',
+      lineHeight: 1.4,
+    },
+    h5: {
+      fontFamily: "'Manrope', sans-serif",
+      fontWeight: 600,
+      fontSize: '0.875rem',
+      lineHeight: 1.4,
+    },
+    h6: {
+      fontFamily: "'Manrope', sans-serif",
+      fontWeight: 600,
+      fontSize: '0.75rem',
+      lineHeight: 1.5,
+      textTransform: 'uppercase',
+      letterSpacing: '0.08em',
+    },
+    subtitle1: {
+      fontSize: '0.9375rem',
+      fontWeight: 400,
+      lineHeight: 1.5,
+    },
+    subtitle2: {
+      fontSize: '0.8125rem',
+      fontWeight: 500,
+      lineHeight: 1.5,
+    },
+    body1: {
+      fontSize: '0.9375rem',
+      fontWeight: 400,
+      lineHeight: 1.6,
+    },
+    body2: {
+      fontSize: '0.8125rem',
+      fontWeight: 400,
+      lineHeight: 1.5,
+    },
+    caption: {
+      fontSize: '0.6875rem',
+      fontWeight: 500,
+      lineHeight: 1.4,
+      letterSpacing: '0.06em',
+      textTransform: 'uppercase',
+    },
+    overline: {
+      fontSize: '0.625rem',
+      fontWeight: 700,
+      lineHeight: 1.5,
+      letterSpacing: '0.1em',
+      textTransform: 'uppercase',
+    },
+    button: {
+      fontFamily: "'Manrope', sans-serif",
+      fontWeight: 600,
+      fontSize: '0.8125rem',
+      textTransform: 'none',
+      letterSpacing: '0.02em',
+    },
+  },
+  shape: {
+    borderRadius: 8,
+  },
+  shadows: [
+    'none',
+    '0 1px 2px rgba(0,0,0,0.3)',
+    '0 2px 4px rgba(0,0,0,0.3)',
+    '0 4px 8px rgba(0,0,0,0.3)',
+    '0 6px 12px rgba(0,0,0,0.35)',
+    '0 8px 16px rgba(0,0,0,0.35)',
+    '0 12px 24px rgba(0,0,0,0.4)',
+    '0 16px 32px rgba(0,0,0,0.4)',
+    '0 20px 40px rgba(0,0,0,0.45)',
+    '0 24px 48px rgba(0,0,0,0.45)',
+    ...Array(15).fill('0 24px 48px rgba(0,0,0,0.45)'),
+  ],
+});
+
+export default theme;

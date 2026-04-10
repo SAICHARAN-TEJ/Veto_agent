@@ -1,71 +1,185 @@
 import React from 'react';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
+import Chip from '@mui/material/Chip';
+import Box from '@mui/material/Box';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import Divider from '@mui/material/Divider';
+
+const outcomeBadgeColors = {
+  failed: '#D94F4F',
+  success: '#4CAF7D',
+  unknown: '#5E6773',
+};
 
 export function CustomerBrief({ brief }) {
   if (!brief) return null;
 
+  const frustrationColors = {
+    high: '#D94F4F',
+    medium: '#E5A84B',
+    low: '#4CAF7D',
+  };
+
   return (
-    <div className="customer-brief">
-      <h3>Customer Memory Intelligence</h3>
-      
-      <div className="brief-section">
-        <div className="brief-row">
-          <span className="brief-label">Company</span>
-          <span className="brief-value">{brief.company}</span>
-        </div>
-        <div className="brief-row">
-          <span className="brief-label">Contact</span>
-          <span className="brief-value">{brief.contact_name}</span>
-        </div>
-        <div className="brief-row">
-          <span className="brief-label">Environment</span>
-          <span className="brief-value">
-            {brief.env.browser || 'Unknown'}, {brief.env.os || 'Unknown'}, {brief.env.plan || 'Standard'}
-            {brief.env.sso_provider && ", SSO: " + brief.env.sso_provider}
-          </span>
-        </div>
-      </div>
- 
-      <div className="brief-section">
-        <h4>Frustration Level: 
-          <span className={"frustration-indicator " + brief.frustration_level}>
-            {brief.frustration_level.toUpperCase()}
-          </span>
-        </h4>
-      </div>
- 
-      <div className="brief-section">
-        <h4>Failure History</h4>
+    <Stack spacing={2.5}>
+      <Box>
+        <Typography variant="h5" color="text.primary" sx={{ mb: 2, fontWeight: 700 }}>
+          Customer Memory Intelligence
+        </Typography>
+
+        <Stack spacing={1.5}>
+          <Box>
+            <Typography variant="overline" color="text.disabled" sx={{ display: 'block', mb: 0.5 }}>
+              Company
+            </Typography>
+            <Typography variant="body2" color="text.primary">
+              {brief.company}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="overline" color="text.disabled" sx={{ display: 'block', mb: 0.5 }}>
+              Contact
+            </Typography>
+            <Typography variant="body2" color="text.primary">
+              {brief.contact_name}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="overline" color="text.disabled" sx={{ display: 'block', mb: 0.5 }}>
+              Environment
+            </Typography>
+            <Typography variant="body2" color="text.primary">
+              {brief.env.browser || 'Unknown'}, {brief.env.os || 'Unknown'}, {brief.env.plan || 'Standard'}
+              {brief.env.sso_provider && `, SSO: ${brief.env.sso_provider}`}
+            </Typography>
+          </Box>
+        </Stack>
+      </Box>
+
+      <Divider sx={{ my: 0 }} />
+
+      <Box>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+          <Typography variant="h6" color="text.primary" sx={{ fontWeight: 700 }}>
+            Frustration Level
+          </Typography>
+          <Chip
+            label={brief.frustration_level.toUpperCase()}
+            size="small"
+            sx={{
+              bgcolor: `${frustrationColors[brief.frustration_level]}22`,
+              color: frustrationColors[brief.frustration_level],
+              border: `1px solid ${frustrationColors[brief.frustration_level]}`,
+              fontWeight: 700,
+              fontSize: '0.7rem',
+            }}
+          />
+        </Stack>
+      </Box>
+
+      <Divider sx={{ my: 0 }} />
+
+      <Box>
+        <Typography variant="h6" color="text.primary" sx={{ fontWeight: 700, mb: 1.5 }}>
+          Failure History
+        </Typography>
         {brief.past_solutions.length > 0 ? (
-          <ul className="past-solutions-list">
+          <List sx={{ p: 0 }}>
             {brief.past_solutions.map((solution, index) => (
-              <li key={index} className="solution-item">
-                <div className="solution-info">
-                  <strong>Ticket #{solution.ticket_id}</strong> <span style={{opacity: 0.6, fontWeight: 'normal', marginLeft: '8px' }}>{solution.date}</span>
-                </div>
-                <div className="solution-details">
-                  <span>Attempted: {solution.solution}</span>
-                  <span className={"outcome-badge " + solution.outcome}>
-                    {solution.outcome.toUpperCase()}
-                  </span>
-                </div>
-              </li>
+              <Box key={index}>
+                <ListItem
+                  sx={{
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    p: 1.5,
+                    bgcolor: 'grey.700',
+                    borderRadius: '8px',
+                    mb: index < brief.past_solutions.length - 1 ? 1 : 0,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%', mb: 0.75 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                      Ticket #{solution.ticket_id}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {solution.date}
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {solution.solution}
+                    </Typography>
+                    <Chip
+                      label={solution.outcome.toUpperCase()}
+                      size="small"
+                      sx={{
+                        bgcolor: `${outcomeBadgeColors[solution.outcome] || outcomeBadgeColors.unknown}22`,
+                        color: outcomeBadgeColors[solution.outcome] || outcomeBadgeColors.unknown,
+                        border: `1px solid ${outcomeBadgeColors[solution.outcome] || outcomeBadgeColors.unknown}`,
+                        fontWeight: 700,
+                        fontSize: '0.65rem',
+                        ml: 1,
+                      }}
+                    />
+                  </Stack>
+                </ListItem>
+              </Box>
             ))}
-          </ul>
+          </List>
         ) : (
-          <p style={{fontSize: '0.8rem', color: 'var(--color-text-muted)'}}>No previous failure data</p>
+          <Typography variant="caption" color="text.disabled">
+            No previous failure data
+          </Typography>
         )}
-      </div>
- 
-      <div className="brief-section stats">
-        <div className="stat">
-          <span className="stat-label">Tickets</span>
-          <span className="stat-value">{brief.total_tickets}</span>
-        </div>
-        <div className="stat">
-          <span className="stat-label">Escalations</span>
-          <span className="stat-value">{brief.escalation_count}</span>
-        </div>
-      </div>
-    </div>
+      </Box>
+
+      <Divider sx={{ my: 0 }} />
+
+      <Stack direction="row" spacing={2}>
+        <Paper
+          sx={{
+            flex: 1,
+            p: 2,
+            bgcolor: 'grey.700',
+            border: '1px solid',
+            borderColor: 'divider',
+            textAlign: 'center',
+          }}
+          elevation={0}
+        >
+          <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mb: 0.5 }}>
+            Tickets
+          </Typography>
+          <Typography variant="h4" color="primary.main" sx={{ fontWeight: 700 }}>
+            {brief.total_tickets}
+          </Typography>
+        </Paper>
+        <Paper
+          sx={{
+            flex: 1,
+            p: 2,
+            bgcolor: 'grey.700',
+            border: '1px solid',
+            borderColor: 'divider',
+            textAlign: 'center',
+          }}
+          elevation={0}
+        >
+          <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mb: 0.5 }}>
+            Escalations
+          </Typography>
+          <Typography variant="h4" color="error.main" sx={{ fontWeight: 700 }}>
+            {brief.escalation_count}
+          </Typography>
+        </Paper>
+      </Stack>
+    </Stack>
   );
 }
