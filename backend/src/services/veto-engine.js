@@ -217,6 +217,3 @@ async function checkDraft(customerId, draftText, ticketId) {
 
 
 module.exports = { checkDraft };
-
-
-module.exports = { checkDraft };

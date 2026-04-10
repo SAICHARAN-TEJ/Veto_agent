@@ -6,6 +6,7 @@ import createCache from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
 import App from './App';
 import theme from './theme';
+import './styles/index.css';
 
 const emotionCache = createCache({ key: 'mui', prepend: true });
 

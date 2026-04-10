@@ -32,16 +32,28 @@ export function MemoryTraceView({ trace }) {
         <Typography variant="h6" color="text.primary" sx={{ fontWeight: 700 }}>
           🧠 Memory Recall Trace
         </Typography>
-        <Chip
-          label={`Confidence: ${finalConfidence}%`}
-          size="small"
-          sx={{
-            bgcolor: 'rgba(76, 175, 125, 0.2)',
-            color: 'success.main',
-            fontWeight: 700,
-            fontSize: '0.7rem',
-          }}
-        />
+        <Stack direction="row" spacing={1}>
+          <Chip
+            label={`Confidence: ${finalConfidence}%`}
+            size="small"
+            sx={{
+              bgcolor: 'rgba(76, 175, 125, 0.2)',
+              color: 'success.main',
+              fontWeight: 700,
+              fontSize: '0.7rem',
+            }}
+          />
+          <Chip
+            label="Fresh recall"
+            size="small"
+            sx={{
+              bgcolor: 'rgba(154, 163, 174, 0.14)',
+              color: 'text.secondary',
+              fontWeight: 600,
+              fontSize: '0.7rem',
+            }}
+          />
+        </Stack>
       </Stack>
 
       <Divider />

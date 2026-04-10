@@ -30,6 +30,25 @@ export function CustomerBrief({ brief }) {
           Customer Memory Intelligence
         </Typography>
 
+        <Paper
+          elevation={0}
+          sx={{
+            p: 1.25,
+            mb: 1.5,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: '8px',
+            bgcolor: 'rgba(255,255,255,0.03)',
+          }}
+        >
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Chip label="Memory Source" size="small" sx={{ bgcolor: 'grey.700', color: 'text.secondary', fontSize: '0.65rem' }} />
+            <Typography variant="caption" color="text.secondary">
+              Customer Failure Memory + Solution Index (fresh at request time)
+            </Typography>
+          </Stack>
+        </Paper>
+
         <Stack spacing={1.5}>
           <Box>
             <Typography variant="overline" color="text.disabled" sx={{ display: 'block', mb: 0.5 }}>

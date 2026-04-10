@@ -11,11 +11,9 @@ import FormLabel from '@mui/material/FormLabel';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Radio from '@mui/material/Radio';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 
-export function TicketClose({ onSubmit, onCancel, initialDraft, customer }) {
+export function TicketClose({ onSubmit, onCancel, initialDraft, customer, ticketId, issueCategory }) {
   const [outcome, setOutcome] = useState('resolved');
   const [solutionUsed, setSolutionUsed] = useState(initialDraft || '');
   const [resolutionNotes, setResolutionNotes] = useState('');
@@ -27,16 +25,14 @@ export function TicketClose({ onSubmit, onCancel, initialDraft, customer }) {
 
     const memoryData = {
       customer_id: customer?.id,
-      ticket_id: 'placeholder',
-      solution: solutionUsed,
+      ticket_id: ticketId || 'unknown_ticket',
+      solutions_attempted: [solutionUsed],
       outcome,
+      issue_category: issueCategory || 'agent_resolution',
       resolution_notes: resolutionNotes,
       frustration_signal: frustrationSignal,
     };
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Writing memory:', memoryData);
-    }
     onSubmit(memoryData);
   };
 

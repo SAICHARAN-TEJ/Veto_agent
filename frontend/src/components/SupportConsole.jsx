@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -7,10 +7,15 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
+import LinearProgress from '@mui/material/LinearProgress';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import Fade from '@mui/material/Fade';
+import Grow from '@mui/material/Grow';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -18,6 +23,7 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import InsightsIcon from '@mui/icons-material/Insights';
 import SpeedIcon from '@mui/icons-material/Speed';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useVeto } from '../hooks/useVeto';
 import { useCustomerBrief } from '../hooks/useCustomerBrief';
 import { VetoOverlay } from './VetoOverlay';
@@ -108,12 +114,23 @@ const frustrationColors = {
   low: '#4CAF7D',
 };
 
+const API_BASE = import.meta.env.VITE_API_BASE;
+
 export function SupportConsole() {
+  const theme = useTheme();
+  const isLgDown = useMediaQuery(theme.breakpoints.down('lg'));
+  const isMdDown = useMediaQuery(theme.breakpoints.down('md'));
   const [activeCustomer, setActiveCustomer] = useState(null);
   const [activeTicket, setActiveTicket] = useState(null);
   const [draftResponse, setDraftResponse] = useState('');
   const [showTicketCloseModal, setShowTicketCloseModal] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [memoryWins, setMemoryWins] = useState(0);
+  const [conflictsPrevented, setConflictsPrevented] = useState(0);
+  const [safeSends, setSafeSends] = useState(0);
+  const [demoStep, setDemoStep] = useState(1);
+  const [showWinToast, setShowWinToast] = useState(false);
+  const lastStatusRef = useRef('idle');
 
   const { brief, loading: briefLoading } = useCustomerBrief(activeCustomer?.id);
   const { status, vetoData, checkDraft } = useVeto(activeCustomer?.id, activeTicket?.id);
@@ -134,20 +151,68 @@ export function SupportConsole() {
 
   const handleUseSuggestion = useCallback((text) => {
     setDraftResponse(text);
+    setDemoStep(3);
   }, []);
 
-  const handleCloseTicket = () => setShowTicketCloseModal(true);
-
-  const handleTicketCloseSubmit = (closeData) => {
-    setShowTicketCloseModal(false);
+  const handleCloseTicket = () => {
+    if (status === 'clear') {
+      setSafeSends(prev => prev + 1);
+    }
+    setShowTicketCloseModal(true);
   };
 
-  const metrics = useMemo(() => ({
-    mdrr: '42%',
-    ttr_reduction: '61%',
-    csat_uplift: '+0.3',
-    efficiency: '+38%',
-  }), []);
+  const handleTicketCloseSubmit = async (closeData) => {
+    try {
+      const response = await fetch(API_BASE + '/api/memory/write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(closeData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Memory write failed: ' + response.status);
+      }
+
+      setMemoryWins(prev => prev + 1);
+      setDemoStep(4);
+      setShowWinToast(true);
+    } catch (error) {
+      console.error('Failed to write memory:', error);
+    } finally {
+      setShowTicketCloseModal(false);
+    }
+  };
+
+  useEffect(() => {
+    if (status === 'vetoed' && lastStatusRef.current !== 'vetoed') {
+      setConflictsPrevented(prev => prev + 1);
+      setDemoStep(2);
+    }
+    if (status === 'checking' && demoStep < 2) {
+      setDemoStep(1);
+    }
+    if (status === 'clear' && draftResponse.trim()) {
+      setDemoStep(prev => (prev < 3 ? 3 : prev));
+    }
+    lastStatusRef.current = status;
+  }, [status, draftResponse, demoStep]);
+
+  const metrics = useMemo(() => {
+    const totalDecisions = conflictsPrevented + safeSends;
+    const mdrrValue = totalDecisions > 0
+      ? Math.round((conflictsPrevented / totalDecisions) * 100)
+      : 0;
+    const ttrReduction = Math.min(85, 20 + conflictsPrevented * 9);
+    const csatUplift = (Math.min(0.9, conflictsPrevented * 0.15 + memoryWins * 0.05)).toFixed(1);
+    const efficiencyGain = Math.min(70, 10 + (conflictsPrevented + memoryWins) * 7);
+
+    return {
+      mdrr: `${mdrrValue}%`,
+      ttr_reduction: `${ttrReduction}%`,
+      csat_uplift: `+${csatUplift}`,
+      efficiency: `+${efficiencyGain}%`,
+    };
+  }, [conflictsPrevented, safeSends, memoryWins]);
 
   const metricItems = [
     { label: 'MDRR', value: metrics.mdrr, desc: 'Memory-Driven Resolution Rate', icon: <InsightsIcon /> },
@@ -155,10 +220,16 @@ export function SupportConsole() {
     { label: 'CSAT Uplift', value: metrics.csat_uplift, desc: 'Customer Satisfaction Index', icon: <TrendingUpIcon /> },
     { label: 'Efficiency', value: metrics.efficiency, desc: 'Tickets per Agent/Shift', icon: <SpeedIcon /> },
   ];
+  const sessionStats = {
+    conflictsPrevented,
+    memoryWins,
+    safeSends,
+    totalDecisions: conflictsPrevented + safeSends,
+  };
 
   if (!activeCustomer) {
     return (
-      <Stack sx={{ height: '100%', alignItems: 'center', justifyContent: 'center', px: 4 }}>
+      <Stack sx={{ height: '100%', alignItems: 'center', justifyContent: 'center', px: { xs: 2, md: 4 }, py: 3 }}>
         <Stack spacing={4} sx={{ maxWidth: 640, width: '100%', alignItems: 'center' }}>
           <Paper
             onClick={() => setShowDashboard(true)}
@@ -195,44 +266,56 @@ export function SupportConsole() {
             <Typography variant="body1" color="text.secondary">
               Select a customer to begin intercepting redundant solutions
             </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 520 }}>
+              This demo shows the before-and-after moment: generic support repeats failed steps, memory-driven support pivots instantly.
+            </Typography>
           </Stack>
 
           <Stack spacing={1} sx={{ width: '100%' }}>
-            {mockCustomers.map(customer => (
-              <CustomerCard
-                key={customer.id}
-                isActive={false}
-                onClick={() => handleCustomerSelect(customer)}
-                elevation={0}
-              >
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
-                  <Stack>
-                    <Typography variant="subtitle2" color="text.primary">
-                      {customer.contact_name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {customer.company}
-                    </Typography>
+            {mockCustomers.map((customer, index) => (
+              <Grow in key={customer.id} timeout={220 + index * 90}>
+                <CustomerCard
+                  isActive={false}
+                  onClick={() => handleCustomerSelect(customer)}
+                  elevation={0}
+                >
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Stack>
+                      <Typography variant="subtitle2" color="text.primary">
+                        {customer.contact_name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {customer.company}
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <FiberManualRecordIcon sx={{ fontSize: 10, color: frustrationColors[customer.frustration_level], filter: `drop-shadow(0 0 4px ${frustrationColors[customer.frustration_level]})` }} />
+                      <Chip label={customer.ticket_count} size="small" sx={{ height: 22, fontSize: '0.7rem', bgcolor: 'grey.600', color: 'text.secondary' }} />
+                    </Stack>
                   </Stack>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <FiberManualRecordIcon sx={{ fontSize: 10, color: frustrationColors[customer.frustration_level], filter: `drop-shadow(0 0 4px ${frustrationColors[customer.frustration_level]})` }} />
-                    <Chip label={customer.ticket_count} size="small" sx={{ height: 22, fontSize: '0.7rem', bgcolor: 'grey.600', color: 'text.secondary' }} />
-                  </Stack>
-                </Stack>
-              </CustomerCard>
+                </CustomerCard>
+              </Grow>
             ))}
           </Stack>
         </Stack>
 
-        <DashboardDialog open={showDashboard} onClose={() => setShowDashboard(false)} metrics={metricItems} />
+        <DashboardDialog open={showDashboard} onClose={() => setShowDashboard(false)} metrics={metricItems} sessionStats={sessionStats} />
       </Stack>
     );
   }
 
   return (
-    <Stack direction="row" sx={{ height: '100%' }}>
+    <Stack direction={isMdDown ? 'column' : 'row'} sx={{ height: '100%' }}>
       {/* Sidebar */}
-      <SidebarContainer>
+      <SidebarContainer
+        sx={{
+          width: isMdDown ? '100%' : isLgDown ? 260 : 300,
+          borderRight: isMdDown ? 'none' : '1px solid',
+          borderBottom: isMdDown ? '1px solid' : 'none',
+          borderColor: 'divider',
+          maxHeight: isMdDown ? 260 : 'none',
+        }}
+      >
         <Box sx={{ p: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Typography variant="h6" color="text.disabled" sx={{ mb: 0 }}>
@@ -276,17 +359,62 @@ export function SupportConsole() {
       </SidebarContainer>
 
       {/* Center Column */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
         {activeTicket ? (
           <>
+            <Paper
+              elevation={0}
+              sx={{
+                mx: { xs: 2, md: 3 },
+                mt: { xs: 2, md: 2.5 },
+                p: { xs: 1.5, md: 2 },
+                borderRadius: '12px',
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'rgba(196,149,106,0.06)',
+              }}
+            >
+              <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
+                <Stack>
+                  <Typography variant="overline" color="primary.main" sx={{ lineHeight: 1.2 }}>
+                    60-Second Demo Script
+                  </Typography>
+                  <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
+                    {demoStep === 1 && 'Step 1: Type a known failed solution to trigger memory check.'}
+                    {demoStep === 2 && 'Step 2: Conflict detected. Show how memory blocks repeated failure.'}
+                    {demoStep === 3 && 'Step 3: Apply memory-backed alternative and send response.'}
+                    {demoStep >= 4 && 'Step 4: Close ticket and store the outcome to strengthen memory.'}
+                  </Typography>
+                </Stack>
+                <Chip
+                  label={`STEP ${Math.min(demoStep, 4)} / 4`}
+                  size="small"
+                  sx={{ bgcolor: 'primary.main', color: 'background.default', fontWeight: 700 }}
+                />
+              </Stack>
+              <LinearProgress
+                variant="determinate"
+                value={(Math.min(demoStep, 4) / 4) * 100}
+                sx={{
+                  mt: 1.2,
+                  height: 7,
+                  borderRadius: 8,
+                  bgcolor: 'rgba(255,255,255,0.08)',
+                  '& .MuiLinearProgress-bar': {
+                    bgcolor: 'primary.main',
+                  },
+                }}
+              />
+            </Paper>
+
             {/* Ticket Header */}
-            <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Box sx={{ p: { xs: 2, md: 3 }, borderBottom: '1px solid', borderColor: 'divider' }}>
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                 <Stack>
                   <Typography variant="h3">{activeCustomer.contact_name}</Typography>
                   <Typography variant="body2" color="text.secondary">{activeCustomer.company}</Typography>
                 </Stack>
-                <Stack direction="row" spacing={1.5} alignItems="center">
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                   <Chip label={`#${activeTicket.id}`} size="small" sx={{ bgcolor: 'grey.700', color: 'text.secondary', fontSize: '0.7rem' }} />
                   <Chip label={activeTicket.issue_category.replace(/_/g, ' ')} size="small" variant="outlined" sx={{ borderColor: 'divider', color: 'text.secondary', fontSize: '0.7rem', textTransform: 'capitalize' }} />
                   <Typography variant="overline" color="text.disabled">
@@ -297,7 +425,7 @@ export function SupportConsole() {
             </Box>
 
             {/* Thread */}
-            <Stack spacing={2.5} sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
+            <Stack spacing={2.5} sx={{ flex: 1, overflowY: 'auto', p: { xs: 2, md: 3 } }}>
               {activeTicket.thread.map((msg, index) => (
                 <Fade in key={index} timeout={300 + index * 100}>
                   <MessageBubble isAgent={msg.sender !== 'customer'} elevation={0}>
@@ -311,15 +439,38 @@ export function SupportConsole() {
             </Stack>
 
             {/* Draft Area */}
-            <Box sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>
+            <Box sx={{ p: { xs: 2, md: 3 }, borderTop: '1px solid', borderColor: 'divider' }}>
               <Stack spacing={1.5}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 1.5,
+                    borderRadius: '10px',
+                    border: '1px solid',
+                    borderColor: status === 'vetoed' ? 'error.dark' : 'divider',
+                    bgcolor: status === 'vetoed' ? 'rgba(217,79,79,0.08)' : 'rgba(196,149,106,0.06)',
+                    transition: 'all 220ms ease',
+                  }}
+                >
+                  <Stack direction="row" spacing={1.2} alignItems="center">
+                    <AutoAwesomeIcon sx={{ color: status === 'vetoed' ? 'error.main' : 'primary.main', fontSize: 18 }} />
+                    <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
+                      {status === 'vetoed'
+                        ? 'Memory caught a repeated failed solution. Use the suggested pivot below.'
+                        : status === 'clear'
+                          ? 'No failed-memory conflict detected. Safe to continue with this response.'
+                          : 'Type your response to trigger real-time memory conflict detection.'}
+                    </Typography>
+                  </Stack>
+                </Paper>
+
                 <DraftTextarea
                   value={draftResponse}
                   onChange={handleDraftChange}
                   placeholder="Type your response..."
                   rows={4}
                 />
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ gap: 1, flexWrap: 'wrap' }}>
                   <Box>
                     {status === 'checking' && (
                       <Typography variant="caption" color="primary.main" sx={{ animation: 'pulseGlow 1.5s infinite' }}>
@@ -333,6 +484,18 @@ export function SupportConsole() {
                       <Typography variant="caption" color="success.main">✓ Memory Clear</Typography>
                     )}
                   </Box>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Chip
+                      label={`Conflicts Prevented: ${conflictsPrevented}`}
+                      size="small"
+                      sx={{ bgcolor: 'rgba(217,79,79,0.16)', color: 'error.main', border: '1px solid', borderColor: 'error.dark', fontSize: '0.65rem' }}
+                    />
+                    <Chip
+                      label={`Memory Writes: ${memoryWins}`}
+                      size="small"
+                      sx={{ bgcolor: 'rgba(76,175,125,0.16)', color: 'success.main', border: '1px solid', borderColor: 'success.dark', fontSize: '0.65rem' }}
+                    />
+                  </Stack>
                   <Button
                     variant="contained"
                     onClick={handleCloseTicket}
@@ -348,7 +511,42 @@ export function SupportConsole() {
 
             {/* Veto + Trace */}
             {status === 'vetoed' && vetoData && (
-              <Box sx={{ p: 3, pt: 0, maxHeight: '50vh', overflowY: 'auto' }}>
+              <Fade in timeout={260}>
+                <Box sx={{ p: { xs: 2, md: 3 }, pt: 0, maxHeight: '50vh', overflowY: 'auto' }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    mb: 2,
+                    borderRadius: '12px',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    bgcolor: 'grey.700',
+                  }}
+                >
+                  <Typography variant="overline" color="primary.main" sx={{ display: 'block', mb: 1 }}>
+                    Before vs After Memory
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 1.5 }}>
+                    <Paper elevation={0} sx={{ p: 1.5, border: '1px solid', borderColor: 'error.dark', bgcolor: 'rgba(217,79,79,0.08)' }}>
+                      <Typography variant="caption" color="error.main" sx={{ fontWeight: 700, display: 'block', mb: 0.6 }}>
+                        WITHOUT MEMORY
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                        Agent repeats a previously failed step, increasing customer frustration and ticket churn.
+                      </Typography>
+                    </Paper>
+                    <Paper elevation={0} sx={{ p: 1.5, border: '1px solid', borderColor: 'success.dark', bgcolor: 'rgba(76,175,125,0.08)' }}>
+                      <Typography variant="caption" color="success.main" sx={{ fontWeight: 700, display: 'block', mb: 0.6 }}>
+                        WITH MEMORY
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                        Conflict is intercepted in real time and replaced with a higher-probability solution.
+                      </Typography>
+                    </Paper>
+                  </Box>
+                </Paper>
+
                 <VetoOverlay
                   vetoed={true}
                   reason={vetoData.reason}
@@ -359,7 +557,8 @@ export function SupportConsole() {
                   onUseSuggestion={handleUseSuggestion}
                 />
                 <MemoryTraceView trace={vetoData.trace} />
-              </Box>
+                </Box>
+              </Fade>
             )}
           </>
         ) : (
@@ -370,7 +569,8 @@ export function SupportConsole() {
       </Box>
 
       {/* Right Column */}
-      <Box sx={{ width: 360, borderLeft: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', overflowY: 'auto', p: 2.5 }}>
+      {!isMdDown && (
+        <Box sx={{ width: 360, borderLeft: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', overflowY: 'auto', p: 2.5 }}>
         {briefLoading ? (
           <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', pt: 5 }}>Loading customer brief...</Typography>
         ) : brief ? (
@@ -378,10 +578,11 @@ export function SupportConsole() {
         ) : (
           <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', pt: 5 }}>No customer selected</Typography>
         )}
-      </Box>
+        </Box>
+      )}
 
       {/* Modals */}
-      <DashboardDialog open={showDashboard} onClose={() => setShowDashboard(false)} metrics={metricItems} />
+      <DashboardDialog open={showDashboard} onClose={() => setShowDashboard(false)} metrics={metricItems} sessionStats={sessionStats} />
 
       {showTicketCloseModal && (
         <TicketClose
@@ -389,13 +590,30 @@ export function SupportConsole() {
           onCancel={() => setShowTicketCloseModal(false)}
           initialDraft={draftResponse}
           customer={activeCustomer}
+          ticketId={activeTicket?.id}
+          issueCategory={activeTicket?.issue_category}
         />
       )}
+
+      <Snackbar
+        open={showWinToast}
+        autoHideDuration={2300}
+        onClose={() => setShowWinToast(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          severity="success"
+          onClose={() => setShowWinToast(false)}
+          sx={{ bgcolor: 'background.paper', color: 'text.primary', border: '1px solid', borderColor: 'success.dark' }}
+        >
+          Memory saved successfully. Wins captured: {memoryWins}
+        </Alert>
+      </Snackbar>
     </Stack>
   );
 }
 
-function DashboardDialog({ open, onClose, metrics }) {
+function DashboardDialog({ open, onClose, metrics, sessionStats }) {
   return (
     <Dialog
       open={open}
@@ -426,7 +644,8 @@ function DashboardDialog({ open, onClose, metrics }) {
 
         <Paper sx={{ p: 2.5, bgcolor: 'rgba(196,149,106,0.06)', borderRadius: '12px', borderLeft: '4px solid', borderLeftColor: 'primary.main', boxShadow: 'none' }}>
           <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            By leveraging the <strong>Unified Failure Memory</strong>, the support organization is preventing approximately <strong>1,200 redundant interactions per month</strong>, directly reducing churn risk for Enterprise accounts.
+            Session impact: <strong>{sessionStats.conflictsPrevented}</strong> repeated failures prevented, <strong>{sessionStats.memoryWins}</strong> memories written,
+            and <strong>{sessionStats.totalDecisions}</strong> memory-aware decisions made in this demo run.
           </Typography>
         </Paper>
       </DialogContent>
