@@ -4,21 +4,17 @@ import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 import Box from '@mui/material/Box';
-import Timeline from '@mui/lab/Timeline';
-import TimelineItem from '@mui/lab/TimelineItem';
-import TimelineSeparator from '@mui/lab/TimelineSeparator';
-import TimelineConnector from '@mui/lab/TimelineConnector';
-import TimelineContent from '@mui/lab/TimelineContent';
-import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent';
-import TimelineDot from '@mui/lab/TimelineDot';
 import Divider from '@mui/material/Divider';
 
-const stageColors = {
-  extraction: 'primary.main',
-  query: 'info.main',
-  analysis: 'warning.main',
-  conclusion: 'success.main',
-  default: 'grey.500',
+/*
+  MemoryTraceView — Custom vertical trace replacing MUI Lab Timeline.
+  Shows each step of the AI reasoning process with memory references.
+*/
+
+const stageConfig = {
+  before: { color: '#94A3B8', label: 'EXTRACTION' },
+  memory_invocation: { color: '#38BDF8', label: 'MEMORY RECALL' },
+  after_memory: { color: '#10B981', label: 'REFINEMENT' },
 };
 
 export function MemoryTraceView({ trace }) {
@@ -27,148 +23,166 @@ export function MemoryTraceView({ trace }) {
   const finalConfidence = Math.round((trace[trace.length - 1]?.confidence || 0) * 100);
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={1.5}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h6" color="text.primary" sx={{ fontWeight: 700 }}>
-          🧠 Memory Recall Trace
+        <Typography variant="caption" sx={{ color: 'var(--text-secondary)', fontWeight: 700, fontSize: '0.65rem' }}>
+          Memory Recall Trace
         </Typography>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={0.8}>
           <Chip
-            label={`Confidence: ${finalConfidence}%`}
+            label={finalConfidence + '% confidence'}
             size="small"
             sx={{
-              bgcolor: 'rgba(76, 175, 125, 0.2)',
-              color: 'success.main',
+              height: 20,
+              bgcolor: 'rgba(16,185,129,0.12)',
+              color: 'var(--emerald-400)',
+              border: '1px solid rgba(16,185,129,0.25)',
               fontWeight: 700,
-              fontSize: '0.7rem',
-            }}
-          />
-          <Chip
-            label="Fresh recall"
-            size="small"
-            sx={{
-              bgcolor: 'rgba(154, 163, 174, 0.14)',
-              color: 'text.secondary',
-              fontWeight: 600,
-              fontSize: '0.7rem',
+              fontSize: '0.55rem',
             }}
           />
         </Stack>
       </Stack>
 
-      <Divider />
-
-      <Timeline position="alternate">
+      {/* Custom trace */}
+      <Stack spacing={0}>
         {trace.map((step, index) => {
           const isLast = index === trace.length - 1;
-          const stageKey = step.stage.toLowerCase().replace(/[_-]/g, '');
-          const dotColor = stageColors[stageKey] || stageColors.default;
+          const stageKey = step.stage || 'before';
+          const config = stageConfig[stageKey] || { color: '#94A3B8', label: step.stage.replace(/_/g, ' ').toUpperCase() };
 
           return (
-            <TimelineItem key={index}>
-              <TimelineOppositeContent color="text.secondary" variant="body2">
-                <Typography variant="caption" color="text.disabled">
-                  {new Date(step.timestamp).toLocaleTimeString()}
-                </Typography>
-              </TimelineOppositeContent>
-              <TimelineSeparator>
-                <TimelineDot sx={{ bgcolor: dotColor }}>
-                  <Box sx={{ width: 8, height: 8, bgcolor: dotColor, borderRadius: '50%' }} />
-                </TimelineDot>
-                {!isLast && <TimelineConnector />}
-              </TimelineSeparator>
-              <TimelineContent sx={{ pb: 2 }}>
-                <Paper
+            <Box key={index} sx={{ display: 'flex', gap: 1.5 }}>
+              {/* Vertical line + dot */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 20, flexShrink: 0 }}>
+                <Box
                   sx={{
-                    p: 2,
-                    bgcolor: 'grey.700',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: '10px',
-                    boxShadow: 'none',
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    bgcolor: config.color,
+                    border: '2px solid var(--bg-raised)',
+                    boxShadow: '0 0 0 2px ' + config.color + '30',
+                    flexShrink: 0,
+                    mt: '3px',
                   }}
-                  elevation={0}
-                >
-                  <Stack spacing={1}>
-                    {/* Stage Badge */}
+                />
+                {!isLast && (
+                  <Box
+                    sx={{
+                      width: 1,
+                      flex: 1,
+                      bgcolor: 'var(--border-default)',
+                      minHeight: 16,
+                    }}
+                  />
+                )}
+              </Box>
+
+              {/* Content */}
+              <Paper
+                elevation={0}
+                sx={{
+                  flex: 1,
+                  p: 1.5,
+                  mb: isLast ? 0 : 1,
+                  borderRadius: 'var(--radius-md)',
+                  bgcolor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-subtle)',
+                }}
+              >
+                <Stack spacing={0.8}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Chip
-                      label={step.stage.replace(/_/g, ' ').toUpperCase()}
+                      label={config.label}
                       size="small"
                       sx={{
-                        bgcolor: `${dotColor}22`,
-                        color: dotColor,
-                        border: `1px solid ${dotColor}`,
+                        height: 18,
+                        bgcolor: config.color + '18',
+                        color: config.color,
+                        border: '1px solid ' + config.color + '30',
                         fontWeight: 700,
-                        fontSize: '0.65rem',
-                        width: 'fit-content',
+                        fontSize: '0.5rem',
                       }}
                     />
-
-                    {/* Description */}
-                    <Typography variant="body2" color="text.primary">
-                      {step.description}
+                    <Typography variant="caption" sx={{ color: 'var(--text-disabled)', fontSize: '0.55rem' }}>
+                      {new Date(step.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     </Typography>
-
-                    {/* Rationale */}
-                    {step.rationale && (
-                      <Box sx={{ bgcolor: 'rgba(255,255,255,0.05)', p: 1, borderRadius: '6px', borderLeft: '3px solid', borderLeftColor: 'primary.main' }}>
-                        <Typography variant="caption" color="text.secondary">
-                          <strong>Why:</strong> {step.rationale}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {/* Result Summary */}
-                    <Typography variant="caption" color="text.disabled" sx={{ fontStyle: 'italic' }}>
-                      {step.result_summary}
-                    </Typography>
-
-                    {/* Memory Ref */}
-                    {step.memory_ref && (
-                      <Paper
-                        sx={{
-                          p: 1.5,
-                          bgcolor: 'rgba(76, 175, 125, 0.08)',
-                          border: '1px solid',
-                          borderColor: 'success.main',
-                          borderRadius: '8px',
-                          boxShadow: 'none',
-                          mt: 1,
-                        }}
-                        elevation={0}
-                      >
-                        <Stack spacing={0.5}>
-                          <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Typography variant="caption" color="success.main" sx={{ fontWeight: 700 }}>
-                              💾 Memory Reference
-                            </Typography>
-                            <Chip
-                              label={`${Math.round(step.memory_ref.similarity * 100)}% Match`}
-                              size="small"
-                              sx={{
-                                bgcolor: 'success.main',
-                                color: 'background.default',
-                                fontWeight: 700,
-                                fontSize: '0.65rem',
-                              }}
-                            />
-                          </Stack>
-                          <Typography variant="caption" color="text.secondary">
-                            ID: {step.memory_ref.memory_id}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                            "{step.memory_ref.excerpt}"
-                          </Typography>
-                        </Stack>
-                      </Paper>
-                    )}
                   </Stack>
-                </Paper>
-              </TimelineContent>
-            </TimelineItem>
+
+                  <Typography variant="body2" sx={{ color: 'var(--text-primary)', fontSize: '0.78rem', lineHeight: 1.5 }}>
+                    {step.description}
+                  </Typography>
+
+                  {step.rationale && (
+                    <Box
+                      sx={{
+                        px: 1,
+                        py: 0.6,
+                        borderRadius: 'var(--radius-sm)',
+                        bgcolor: 'rgba(148,163,184,0.04)',
+                        borderLeft: '2px solid',
+                        borderLeftColor: 'var(--emerald-500)',
+                      }}
+                    >
+                      <Typography variant="caption" sx={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>
+                        <strong style={{ color: 'var(--text-secondary)' }}>Why:</strong> {step.rationale}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  <Typography variant="caption" sx={{ color: 'var(--text-disabled)', fontStyle: 'italic', fontSize: '0.65rem' }}>
+                    {step.result_summary}
+                  </Typography>
+
+                  {/* Memory reference */}
+                  {step.memory_ref && (
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 1.2,
+                        borderRadius: 'var(--radius-md)',
+                        bgcolor: 'rgba(16, 185, 129, 0.04)',
+                        border: '1px solid rgba(16, 185, 129, 0.12)',
+                      }}
+                    >
+                      <Stack spacing={0.4}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Stack direction="row" spacing={0.6} alignItems="center">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            </svg>
+                            <Typography variant="caption" sx={{ color: 'var(--emerald-400)', fontWeight: 700, fontSize: '0.58rem' }}>
+                              Memory Reference
+                            </Typography>
+                          </Stack>
+                          <Chip
+                            label={Math.round(step.memory_ref.similarity * 100) + '% match'}
+                            size="small"
+                            sx={{
+                              height: 16,
+                              bgcolor: 'rgba(16,185,129,0.15)',
+                              color: 'var(--emerald-400)',
+                              fontWeight: 700,
+                              fontSize: '0.5rem',
+                            }}
+                          />
+                        </Stack>
+                        <Typography variant="caption" sx={{ color: 'var(--text-muted)', fontSize: '0.6rem', fontFamily: 'var(--font-mono)' }}>
+                          {step.memory_ref.memory_id}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.62rem' }}>
+                          "{step.memory_ref.excerpt}"
+                        </Typography>
+                      </Stack>
+                    </Paper>
+                  )}
+                </Stack>
+              </Paper>
+            </Box>
           );
         })}
-      </Timeline>
+      </Stack>
     </Stack>
   );
 }

@@ -5,114 +5,200 @@ import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Box from '@mui/material/Box';
-import Alert from '@mui/material/Alert';
-import AlertTitle from '@mui/material/AlertTitle';
 import Divider from '@mui/material/Divider';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 export function VetoOverlay({ vetoed, reason, failedOn, ticketRefs, suggestion, confidence, onUseSuggestion }) {
   if (!vetoed) return null;
 
   const handleUseSuggestion = () => {
     if (suggestion) {
-      const professionalText = "Hi,\n\nLet's try a different approach. " + suggestion.steps + "\n\n" + suggestion.reasoning;
-      onUseSuggestion(professionalText);
+      const text = "Hi,\n\nLet's try a different approach. " + suggestion.steps + "\n\n" + suggestion.reasoning;
+      onUseSuggestion(text);
     }
   };
 
-  return (
-    <Stack spacing={2}>
-      {/* Veto Alert */}
-      <Alert
-        severity="error"
-        sx={{
-          bgcolor: 'rgba(217, 79, 79, 0.08)',
-          border: '1px solid',
-          borderColor: 'error.main',
-          borderRadius: '12px',
-          p: 2,
-          '.MuiAlert-icon': {
-            color: 'error.main',
-          },
-        }}
-        icon={<span style={{ fontSize: '1.5rem', fontWeight: 700 }}>!</span>}
-      >
-        <AlertTitle sx={{ fontWeight: 700, mb: 0.5 }}>
-          Memory Conflict: Solution Already Failed
-        </AlertTitle>
-        <Typography variant="body2" color="text.primary" sx={{ mb: 1.5 }}>
-          {reason}
-        </Typography>
-        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-          <Chip
-            label={`Confidence: ${Math.round(confidence * 100)}%`}
-            size="small"
-            sx={{ bgcolor: 'rgba(217,79,79,0.2)', color: 'error.main', fontSize: '0.7rem' }}
-          />
-          {failedOn && failedOn.length > 0 && (
-            <Chip
-              label={`Failure Date: ${failedOn.join(', ')}`}
-              size="small"
-              sx={{ bgcolor: 'rgba(217,79,79,0.2)', color: 'error.main', fontSize: '0.7rem' }}
-            />
-          )}
-          {ticketRefs && ticketRefs.length > 0 && (
-            <Chip
-              label={`Ref: ${ticketRefs.map(t => '#' + t).join(', ')}`}
-              size="small"
-              sx={{ bgcolor: 'rgba(217,79,79,0.2)', color: 'error.main', fontSize: '0.7rem' }}
-            />
-          )}
-        </Stack>
-      </Alert>
+  const confidencePct = Math.round(confidence * 100);
 
-      {/* Alternative Suggestion */}
-      {suggestion && (
-        <Paper
-          sx={{
-            p: 2.5,
-            bgcolor: 'rgba(76, 175, 125, 0.08)',
-            border: '1px solid',
-            borderColor: 'success.main',
-            borderRadius: '12px',
-            boxShadow: 'none',
-          }}
-          elevation={0}
-        >
-          <Stack spacing={1.5}>
-            <Box>
-              <Typography variant="overline" color="success.main" sx={{ display: 'block', mb: 0.5, fontWeight: 700 }}>
-                AI Suggested Alternative
-              </Typography>
-              <Typography variant="h6" color="text.primary" sx={{ fontWeight: 700 }}>
-                {suggestion.solution_name}
+  return (
+    <Stack spacing={1.5} className="animate-slide-up">
+      {/* Conflict banner */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          borderRadius: 'var(--radius-lg)',
+          bgcolor: 'rgba(239, 68, 68, 0.06)',
+          border: '1px solid rgba(239, 68, 68, 0.18)',
+        }}
+      >
+        <Stack spacing={1.5}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: 'var(--radius-sm)',
+                bgcolor: 'rgba(239, 68, 68, 0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F87171" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: 'var(--red-400)', fontSize: '0.82rem' }}>
+                Memory Conflict: Solution Already Failed
               </Typography>
             </Box>
+            <Chip
+              label={confidencePct + '% match'}
+              size="small"
+              sx={{
+                height: 20,
+                bgcolor: 'rgba(239,68,68,0.12)',
+                color: 'var(--red-400)',
+                border: '1px solid rgba(239,68,68,0.25)',
+                fontWeight: 700,
+                fontSize: '0.58rem',
+              }}
+            />
+          </Stack>
 
-            <Typography variant="body2" color="text.primary">
+          <Typography variant="body2" sx={{ color: 'var(--text-secondary)', fontSize: '0.8rem', lineHeight: 1.6 }}>
+            {reason}
+          </Typography>
+
+          {/* Failure timeline */}
+          {failedOn && failedOn.length > 0 && (
+            <Stack direction="row" spacing={0.8} alignItems="center" sx={{ flexWrap: 'wrap' }}>
+              {failedOn.map((date, i) => (
+                <React.Fragment key={i}>
+                  <Chip
+                    label={date + ' — Failed'}
+                    size="small"
+                    sx={{
+                      height: 20,
+                      bgcolor: 'rgba(239,68,68,0.08)',
+                      color: 'var(--red-300)',
+                      fontSize: '0.58rem',
+                      fontWeight: 600,
+                    }}
+                  />
+                  {i < failedOn.length - 1 && (
+                    <Typography variant="caption" sx={{ color: 'var(--text-disabled)', fontSize: '0.7rem' }}>
+                      →
+                    </Typography>
+                  )}
+                </React.Fragment>
+              ))}
+              <Typography variant="caption" sx={{ color: 'var(--text-disabled)', fontSize: '0.7rem' }}>
+                →
+              </Typography>
+              <Chip
+                label="NOW — Intercepted"
+                size="small"
+                sx={{
+                  height: 20,
+                  bgcolor: 'rgba(16,185,129,0.12)',
+                  color: 'var(--emerald-400)',
+                  border: '1px solid rgba(16,185,129,0.25)',
+                  fontSize: '0.58rem',
+                  fontWeight: 700,
+                }}
+              />
+            </Stack>
+          )}
+
+          {ticketRefs && ticketRefs.length > 0 && (
+            <Stack direction="row" spacing={0.5}>
+              {ticketRefs.map((ref, i) => (
+                <Chip
+                  key={i}
+                  label={'#' + ref}
+                  size="small"
+                  sx={{
+                    height: 18,
+                    bgcolor: 'rgba(148,163,184,0.06)',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.55rem',
+                    fontWeight: 600,
+                  }}
+                />
+              ))}
+            </Stack>
+          )}
+        </Stack>
+      </Paper>
+
+      {/* Alternative suggestion */}
+      {suggestion && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            borderRadius: 'var(--radius-lg)',
+            bgcolor: 'rgba(16, 185, 129, 0.05)',
+            border: '1px solid rgba(16, 185, 129, 0.15)',
+          }}
+        >
+          <Stack spacing={1.2}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box
+                sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 'var(--radius-sm)',
+                  bgcolor: 'rgba(16, 185, 129, 0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </Box>
+              <Box>
+                <Typography variant="overline" sx={{ color: 'var(--emerald-400)', display: 'block', fontSize: '0.55rem', lineHeight: 1.2 }}>
+                  Memory-Backed Alternative
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                  {suggestion.solution_name}
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Typography variant="body2" sx={{ color: 'var(--text-secondary)', fontSize: '0.8rem', lineHeight: 1.6 }}>
               {suggestion.steps}
             </Typography>
 
-            <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+            <Typography variant="caption" sx={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.72rem' }}>
               {suggestion.reasoning}
             </Typography>
 
-            <Divider sx={{ my: 0.5 }} />
+            <Divider sx={{ borderColor: 'var(--border-subtle)' }} />
 
             <Button
               variant="contained"
               onClick={handleUseSuggestion}
-              startIcon={<ContentCopyIcon sx={{ fontSize: '16px !important' }} />}
               sx={{
-                bgcolor: 'success.main',
-                color: 'background.default',
+                bgcolor: 'primary.main',
+                color: '#030711',
                 fontWeight: 700,
-                fontSize: '0.8125rem',
-                textTransform: 'none',
-                borderRadius: '8px',
-                py: 1.2,
+                fontSize: '0.78rem',
+                py: 1,
+                borderRadius: 'var(--radius-md)',
+                alignSelf: 'flex-start',
                 '&:hover': {
-                  bgcolor: 'success.dark',
+                  bgcolor: 'primary.light',
+                  boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
                 },
               }}
             >
