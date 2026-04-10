@@ -66,7 +66,6 @@ const vetoRoutes = require('./routes/veto');
 const memoryRoutes = require('./routes/memory');
 const briefRoutes = require('./routes/brief');
 const suggestRoutes = require('./routes/suggest');
-const statsRoutes = require('./routes/stats');
 
 // New: Async error wrapper to standardize error handling
 const asyncHandler = require('./utils/asyncHandler');
@@ -143,7 +142,6 @@ app.use('/api/veto', vetoRoutes);
 app.use('/api/memory', memoryRoutes);
 app.use('/api/customer', briefRoutes);
 app.use('/api/suggest', suggestRoutes);
-app.use('/api/stats', statsRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -4,10 +4,10 @@ const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#10B981',
-      light: '#34D399',
-      dark: '#059669',
-      contrastText: '#030711',
+      main: '#E8FF00',
+      light: '#F0FF55',
+      dark: '#C8E000',
+      contrastText: '#0C0C0C',
     },
     secondary: {
       main: '#38BDF8',
@@ -41,8 +41,8 @@ const theme = createTheme({
       disabled: '#475569',
     },
     background: {
-      default: '#030711',
-      paper: '#0A1120',
+      default: '#0C0C0C',
+      paper: '#111111',
     },
     divider: 'rgba(148, 163, 184, 0.1)',
     grey: {
@@ -59,7 +59,7 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
     fontSize: 14,
     fontWeightLight: 300,
     fontWeightRegular: 400,
