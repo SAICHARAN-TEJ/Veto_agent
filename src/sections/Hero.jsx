@@ -1,10 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import VetoAlertCard from '../components/demo/VetoAlertCard.jsx';
+
+const ease = [0.25, 0.1, 0.25, 1];
+
+const fadeUp = {
+  initial: { opacity: 0, y: 24 },
+  animate: { opacity: 1, y: 0 },
+};
 
 export default function Hero() {
   const navigate = useNavigate();
-
   return (
     <section style={{
       paddingTop: 'clamp(100px, 14vw, 160px)',
@@ -15,34 +22,47 @@ export default function Hero() {
     }}>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(480px, 100%), 1fr))',
-        gap: 'clamp(40px, 6vw, 100px)',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(460px, 100%), 1fr))',
+        gap: 'clamp(40px, 6vw, 80px)',
         alignItems: 'center',
       }}>
         {/* ── Left: Copy ── */}
-        <div>
+        <motion.div
+          initial="initial"
+          animate="animate"
+          transition={{ staggerChildren: 0.08 }}
+        >
           {/* Eyebrow */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            fontFamily: 'var(--font-mono)', fontSize: 11,
-            color: 'var(--text-secondary)', letterSpacing: '0.08em',
-            marginBottom: 36,
-            borderBottom: '1px solid var(--border)', paddingBottom: 10,
-          }}>
+          <motion.div
+            variants={fadeUp}
+            transition={{ duration: 0.5, ease }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              fontFamily: 'var(--font-mono)', fontSize: 11,
+              color: 'var(--text-secondary)', letterSpacing: '0.08em',
+              marginBottom: 32,
+              borderBottom: '1px solid #2A2A2A', paddingBottom: 8,
+            }}
+          >
             <span style={{
               width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)',
               animation: 'breathe 2s ease-in-out infinite', display: 'inline-block',
               flexShrink: 0,
             }} />
-            MEMORY-POWERED SUPPORT INTELLIGENCE &nbsp;[BETA]
-          </div>
+            MEMORY-POWERED SUPPORT INTELLIGENCE&nbsp;&nbsp;[BETA]
+          </motion.div>
 
           {/* Headline */}
-          <h1 style={{
-            fontSize: 'clamp(56px, 9vw, 120px)',
-            lineHeight: 0.92, letterSpacing: '-0.03em',
-            marginBottom: 28,
-          }}>
+          <motion.h1
+            variants={fadeUp}
+            transition={{ duration: 0.5, ease }}
+            className="hero-headline"
+            style={{
+              fontSize: 'clamp(48px, 8vw, 118px)',
+              lineHeight: 0.95, letterSpacing: '-0.03em',
+              marginBottom: 20,
+            }}
+          >
             <span style={{
               display: 'block',
               fontFamily: 'var(--font-display)',
@@ -71,21 +91,28 @@ export default function Hero() {
             }}>
               What didn&apos;t work.
             </span>
-          </h1>
+          </motion.h1>
 
-          {/* Subhead */}
-          <p style={{
-            fontSize: 16, lineHeight: 1.7,
-            color: 'var(--text-secondary)',
-            maxWidth: 480, marginBottom: 40,
-          }}>
+          {/* Sub */}
+          <motion.p
+            variants={fadeUp}
+            transition={{ duration: 0.5, ease }}
+            style={{
+              fontSize: 16, lineHeight: 1.65, color: 'var(--text-secondary)',
+              maxWidth: 480, marginBottom: 36,
+            }}
+          >
             VETO gives your support team a corporate memory. It intercepts
             the same broken advice before it reaches your customers.{' '}
-            <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Again.</strong>
-          </p>
+            <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Again.</strong>
+          </motion.p>
 
           {/* CTAs */}
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 36 }}>
+          <motion.div
+            variants={fadeUp}
+            transition={{ duration: 0.5, ease }}
+            style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 32 }}
+          >
             <button
               onClick={() => navigate('/app?demo=true')}
               style={{
@@ -122,14 +149,18 @@ export default function Hero() {
             >
               Read the case study
             </button>
-          </div>
+          </motion.div>
 
-          {/* Social proof */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 10,
-            background: '#111', border: '1px solid var(--border)',
-            padding: '8px 14px', borderRadius: 999,
-          }}>
+          {/* Social proof pill */}
+          <motion.div
+            variants={fadeUp}
+            transition={{ duration: 0.5, ease }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 10,
+              background: '#111111', border: '1px solid #1E1E1E',
+              padding: '8px 14px', borderRadius: 999,
+            }}
+          >
             <div style={{ display: 'flex' }}>
               {[
                 { initials: 'PN', bg: '#2A2A2A' },
@@ -151,13 +182,23 @@ export default function Hero() {
             <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-secondary)' }}>
               Used by <strong style={{ color: 'var(--text-primary)' }}>3 enterprise teams</strong> in beta
             </span>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        {/* ── Right: Alert Card Demo ── */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        {/* ── Right: Animated demo card ── */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease, delay: 0.3 }}
+          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}
+        >
+          <div style={{
+            position: 'absolute', inset: -40,
+            background: 'radial-gradient(ellipse at center, rgba(255,59,59,0.06) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
           <VetoAlertCard />
-        </div>
+        </motion.div>
       </div>
     </section>
   );

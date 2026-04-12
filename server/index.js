@@ -36,7 +36,15 @@ app.use((req, res, next) => {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '2.0.0' });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    version: '2.0.0',
+    services: {
+      hindsight: !!process.env.HINDSIGHT_API_KEY ? 'configured' : 'mock',
+      groq: !!process.env.GROQ_API_KEY ? 'configured' : 'mock',
+    },
+  });
 });
 
 // Routes
@@ -56,8 +64,14 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log('\n🧠 VETO backend running on http://localhost:' + PORT);
   console.log('📡 Health: http://localhost:' + PORT + '/health');
+
+  const hindsightKey = process.env.HINDSIGHT_API_KEY;
   const groqKey = process.env.GROQ_API_KEY;
-  const stitchKey = process.env.STITCH_API_KEY;
-  console.log('🔑 Groq:', groqKey ? '✓ configured' : '✗ missing (using mock)');
-  console.log('🔑 Stitch MCP:', stitchKey ? '✓ configured' : '✗ missing (using in-memory)\n');
+  const hindsightUrl = process.env.HINDSIGHT_BASE_URL || 'https://api.hindsight.vectorize.io';
+
+  console.log('');
+  console.log('🔑 Hindsight API:', hindsightKey ? `✓ configured (${hindsightKey.slice(0, 8)}...)` : '✗ missing (using mock)');
+  console.log('🌐 Hindsight URL:', hindsightUrl);
+  console.log('🔑 Groq API:', groqKey ? `✓ configured (${groqKey.slice(0, 8)}...)` : '✗ missing (using mock)');
+  console.log('');
 });
