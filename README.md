@@ -1,4 +1,4 @@
-# Veto: Customer Failure Memory System
+# Veto: Hindsight-First Customer Failure Memory System
 
 **Version:** 1.0.0 | **Status:** Production-Ready | **Last Updated:** April 2026
 
@@ -15,14 +15,33 @@
 
 ## Overview
 
-**Veto** is an enterprise-grade intelligence layer that gives support teams a "corporate memory." It ensures that a customer never has to tell a company twice that a specific solution did not work.
+**Veto** is an enterprise-grade intelligence layer built around **Hindsight memory**. It gives support teams a durable "corporate memory" so customers are never asked to retry solutions that already failed.
 
 By indexing Failure Memories, Veto intercepts redundant troubleshooting steps in **real-time**, preventing "solution fatigue" and preserving customer trust.
 
+### Why Hindsight is the Core of Veto
+
+Hindsight is not an optional add-on in this project; it is the main decision engine.
+
+- Every proposed fix is checked against memory using `queryFailures(...)`
+- Conflict alerts are triggered when failed patterns are found
+- Alternative fixes are ranked using memory signals (`rankAlternatives(...)`)
+- If cloud memory is unavailable, Veto gracefully falls back to in-memory mode
+
+### Live Agent vs Demo Agent (Strict Separation)
+
+Veto now separates customer memory scopes by mode so demo traffic never pollutes live support memory.
+
+- `mode=live` → memory scope prefix `live-<customerId>`
+- `mode=demo` → memory scope prefix `demo-<customerId>`
+- Demo scope auto-seeds `demo-meridian-corp` on demand
+- Live scope never reads demo-seeded history
+- API responses include `mode` and `customer_scope` for observability
+
 ### Core Capabilities
 
-✅ **Real-time Conflict Detection** - Blocks agents from suggesting previously failed solutions  
-✅ **Memory-Driven Recommendations** - Suggests alternatives that worked for similar customers  
+✅ **Hindsight-Powered Conflict Detection** - Blocks agents from suggesting previously failed solutions  
+✅ **Memory-Ranked Recommendations** - Suggests alternatives ordered by observed success  
 ✅ **Environment-Aware Guidance** - Filters suggestions by OS, browser, SSO provider  
 ✅ **AI Reasoning Transparency** - Visualize how conclusions were reached step-by-step  
 ✅ **Business Impact Tracking** - Measure resolution time, satisfaction, and cost savings  
@@ -104,9 +123,10 @@ Recommendations filtered by:
 - Non-blocking suggestion panel
 
 ### 5. 🔄 Hindsight Integration
-- Long-term memory persistence
-- Automatic memory decay for outdated solutions
-- Cross-customer pattern recognition
+- Cloud memory integration via Hindsight API
+- Local in-memory fallback when API keys are unavailable
+- Seeded demo memory for `meridian-corp` to validate conflict detection instantly
+- Ranked alternatives with `success_rate`, `times_tried`, and environment matching
 
 ---
 
@@ -199,6 +219,9 @@ Create `.env` file in project root:
 
 ```env
 GROQ_API_KEY=your_api_key_here
+HINDSIGHT_API_KEY=your_hindsight_key_here   # optional (fallback mode works without this)
+HINDSIGHT_BASE_URL=https://api.hindsight.vectorize.io
+HINDSIGHT_BANK_ID=veto-customer-support
 VITE_API_URL=http://localhost:3001
 NODE_ENV=development
 ```
@@ -262,57 +285,106 @@ npm run dev
 - Development: `http://localhost:3001`
 - Production: `https://veto-api.yourdomain.com`
 
-### POST /analyze
+### POST /api/analyze
 Extract solutions and check for memory conflicts.
 
 **Request:**
 ```json
 {
-  "customer_id": "cust_12345",
-  "draft_response": "Have you tried clearing your cache?",
+  "customerId": "meridian-corp",
+  "draft": "Have you tried clearing your browser cache and trying again?",
+  "mode": "demo",
   "environment": {
-    "os": "Windows 10",
-    "browser": "Chrome 124"
+    "os": "Windows 11",
+    "browser": "Chrome 122",
+    "sso": "Okta"
   }
 }
 ```
 
+> Also accepts legacy keys: `customer_id`, `draft_response`
+
+> `mode` defaults to `live`. Use `mode=demo` for isolated demo memory.
+
 **Response:**
 ```json
 {
+  "success": true,
+  "mode": "demo",
+  "customer_id": "meridian-corp",
+  "customer_scope": "demo-meridian-corp",
   "extracted_solutions": [
-    {"solution": "Clear cache", "confidence": 0.92}
+    "clear browser cache"
   ],
   "memory_conflicts": [
-    {"solution": "Clear cache", "failed_date": "2025-03-15"}
+    {
+      "solution": "clear browser cache",
+      "environment": "Chrome 122/Win11/Okta",
+      "agentId": "J. Park",
+      "timestamp": "2026-03-14T09:10:00Z",
+      "outcome": "failed"
+    }
   ],
-  "blocking_alert": true
+  "blocking_alert": true,
+
+  "conflict": true,
+  "proposed": "clear browser cache",
+  "failCount": 3,
+  "lastAttempt": "2026-04-01",
+  "lastAgent": "L. Torres",
+  "recommended": "SSO token refresh via admin panel — navigate to Admin → Users → meridian-corp → Force SSO token refresh",
+  "confidence": 0.96,
+  "matches": []
 }
 ```
 
-### POST /resolve
+### POST /api/resolve
 Get alternative solutions ranked by success rate.
 
 **Request:**
 ```json
 {
-  "customer_id": "cust_12345",
-  "failed_solutions": ["Clear cache"],
-  "environment": {"os": "Windows 10"}
+  "customerId": "meridian-corp",
+  "failedSolutions": ["clear browser cache"],
+  "mode": "demo",
+  "ticketContext": "Login loop in SSO flow after password reset",
+  "environment": {
+    "os": "Windows 11",
+    "browser": "Chrome 122",
+    "sso": "Okta"
+  }
 }
 ```
+
+> Also accepts legacy keys: `customer_id`, `failed_solutions`, `ticket_context`
+
+> `mode` defaults to `live`. Use `mode=demo` for isolated demo ranking.
 
 **Response:**
 ```json
 {
+  "success": true,
+  "mode": "demo",
+  "customer_id": "meridian-corp",
+  "customer_scope": "demo-meridian-corp",
   "alternatives": [
     {
       "rank": 1,
-      "solution": "Update credentials",
-      "success_rate": 0.87,
-      "steps": ["Step 1", "Step 2"]
+      "solution": "force SSO token refresh",
+      "steps": [
+        "Open admin identity console",
+        "Expire active SSO sessions for the user",
+        "Ask user to sign in again"
+      ],
+      "success_rate": 0,
+      "times_tried": 0,
+      "failed_count": 0,
+      "last_used": null,
+      "environment_match": false
     }
-  ]
+  ],
+  "customer_memory_score": 3,
+  "recommended_followup": "Try \"force SSO token refresh\" first, then record the outcome to improve future rankings."
 }
 ```
 
@@ -345,9 +417,6 @@ veto-agent/
 │   │   └── ui/           # Components
 │   ├── pages/            # Landing, Dashboard
 │   └── store/            # State management
-│
-└── .agent/               # AI agent skills
-    └── skills/
 ```
 
 ---
@@ -404,7 +473,7 @@ npm run dev -- --port 5174
 curl http://localhost:8888/health
 
 # Check console for fallback mode
-# Should see: "Using in-memory store"
+# Should see: "[Hindsight] No API key configured — using in-memory fallback only"
 ```
 
 ---

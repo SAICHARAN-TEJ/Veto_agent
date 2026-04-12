@@ -14,7 +14,12 @@ export default function ResponseComposer() {
     const val = e.target.value;
     setDraft(val);
     if (ticket) {
-      analyze({ ticketId: ticket.id, draft: val, customerId: ticket.customer.id });
+      analyze({
+        ticketId: ticket.id,
+        draft: val,
+        customerId: ticket.customer.id,
+        environment: ticket.customer.environment,
+      });
     }
   };
 

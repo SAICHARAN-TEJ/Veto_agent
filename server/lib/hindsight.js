@@ -66,7 +66,7 @@ function flattenMetadata(obj) {
 // ══════════════════════════════════════════════════════════════
 // RETAIN: Store a memory entry
 // ══════════════════════════════════════════════════════════════
-async function storeMemory({ key, value, tags = [] }) {
+async function storeMemory({ key, value, tags = [], skipInMemory = false }) {
   const bankId = tags.includes('meridian-corp') ? 'meridian-corp' : HINDSIGHT_BANK_ID;
   const contentText = typeof value === 'string' ? value : JSON.stringify(value);
   const metadata = flattenMetadata({ key, ...value, tags });
@@ -90,22 +90,24 @@ async function storeMemory({ key, value, tags = [] }) {
     await retainViaREST(bankId, key, contentText, metadata);
   }
 
-  // 3. Always update in-memory fallback for instant UI responsiveness
-  const existing = memoryStore.get(key);
-  if (existing) {
-    memoryStore.set(key, {
-      ...existing,
-      ...value,
-      count: (existing.count || 1) + 1,
-      updatedAt: new Date().toISOString(),
-    });
-  } else {
-    memoryStore.set(key, {
-      ...value,
-      tags,
-      count: 1,
-      createdAt: new Date().toISOString(),
-    });
+  // 3. Always update in-memory fallback for instant UI responsiveness (unless explicitly skipped)
+  if (!skipInMemory) {
+    const existing = memoryStore.get(key);
+    if (existing) {
+      memoryStore.set(key, {
+        ...existing,
+        ...value,
+        count: (existing.count || 1) + 1,
+        updatedAt: new Date().toISOString(),
+      });
+    } else {
+      memoryStore.set(key, {
+        ...value,
+        tags,
+        count: 1,
+        createdAt: new Date().toISOString(),
+      });
+    }
   }
 
   return { success: true, key };
@@ -244,6 +246,109 @@ async function getMemoryProfile(customerId) {
   };
 }
 
+function normalizeEnvString(environment = {}) {
+  if (!environment || typeof environment !== 'object') return '';
+  return [environment.os, environment.browser, environment.sso]
+    .map((value) => String(value || '').toLowerCase().trim())
+    .filter(Boolean)
+    .join(' ');
+}
+
+function normalizeAlternative(alt) {
+  if (!alt) return null;
+  if (typeof alt === 'string') {
+    const solution = alt.trim();
+    return solution ? { solution, steps: [] } : null;
+  }
+  if (typeof alt !== 'object') return null;
+  const solution = String(alt.solution || '').trim();
+  if (!solution) return null;
+  const steps = Array.isArray(alt.steps)
+    ? alt.steps.map((step) => String(step || '').trim()).filter(Boolean)
+    : [];
+  return { solution, steps };
+}
+
+// ══════════════════════════════════════════════════════════════
+// RANK: Rank alternatives by observed memory outcomes
+// ══════════════════════════════════════════════════════════════
+async function rankAlternatives(alternatives, environment = {}) {
+  const normalizedAlternatives = Array.isArray(alternatives)
+    ? alternatives.map(normalizeAlternative).filter(Boolean)
+    : [];
+
+  if (normalizedAlternatives.length === 0) {
+    return [];
+  }
+
+  const requestedEnv = normalizeEnvString(environment);
+  const ranked = normalizedAlternatives.map((alternative) => {
+    const solutionNorm = alternative.solution.toLowerCase().trim();
+
+    let successes = 0;
+    let failures = 0;
+    let total = 0;
+    let lastUsed = null;
+    let environmentMatch = false;
+
+    for (const [, memory] of memoryStore.entries()) {
+      if (!memory || !memory.solution) continue;
+
+      const memorySolution = String(memory.solution).toLowerCase().trim();
+      if (!memorySolution.includes(solutionNorm.slice(0, 10)) && !solutionNorm.includes(memorySolution.slice(0, 10))) {
+        continue;
+      }
+
+      const count = Number(memory.count);
+      const weight = Number.isFinite(count) && count > 0 ? count : 1;
+      total += weight;
+
+      const outcome = String(memory.outcome || '').toLowerCase().trim();
+      if (outcome === 'resolved' || outcome === 'success' || outcome === 'succeeded') {
+        successes += weight;
+      } else if (outcome === 'failed') {
+        failures += weight;
+      }
+
+      if (memory.timestamp && (!lastUsed || new Date(memory.timestamp) > new Date(lastUsed))) {
+        lastUsed = memory.timestamp;
+      }
+
+      const memoryEnv = String(memory.environment || memory.env || '').toLowerCase();
+      if (requestedEnv && memoryEnv) {
+        const envTerms = requestedEnv.split(' ').filter(Boolean);
+        if (envTerms.some((term) => memoryEnv.includes(term))) {
+          environmentMatch = true;
+        }
+      }
+    }
+
+    const successRate = total > 0 ? successes / total : 0;
+
+    return {
+      solution: alternative.solution,
+      steps: alternative.steps,
+      success_rate: Number(successRate.toFixed(2)),
+      times_tried: total,
+      failed_count: failures,
+      last_used: lastUsed,
+      environment_match: requestedEnv ? environmentMatch : false,
+    };
+  });
+
+  ranked.sort((a, b) => {
+    if (b.success_rate !== a.success_rate) return b.success_rate - a.success_rate;
+    if (b.environment_match !== a.environment_match) return Number(b.environment_match) - Number(a.environment_match);
+    if (b.times_tried !== a.times_tried) return b.times_tried - a.times_tried;
+    return 0;
+  });
+
+  return ranked.slice(0, 5).map((item, index) => ({
+    rank: index + 1,
+    ...item,
+  }));
+}
+
 // ── Seed demo data for Meridian Corp ──────────────────────────
 function seedDemoData() {
   const demoFailures = [
@@ -267,12 +372,66 @@ function seedDemoData() {
       count: 1,
     });
     // Also retain in cloud Hindsight (async, fire-and-forget)
-    storeMemory({ key, value: f, tags: ['meridian-corp', 'failure'] }).catch(() => {});
+    storeMemory({ key, value: f, tags: ['meridian-corp', 'failure'], skipInMemory: true }).catch(() => {});
   });
 
   console.log('[Hindsight] Seeded', demoFailures.length, 'demo memories for meridian-corp');
 }
 
+function seedScopedDemoData(scopedCustomerId) {
+  const normalizedScopedId = String(scopedCustomerId || '').toLowerCase().trim();
+  if (!normalizedScopedId.startsWith('demo-')) {
+    return;
+  }
+
+  const hasSeeded = Array.from(memoryStore.keys()).some((key) => key.startsWith(`failure:${normalizedScopedId}:`));
+  if (hasSeeded) {
+    return;
+  }
+
+  const demoFailures = [
+    { solution: 'clear browser cache', env: 'Chrome 122/Win11/Okta', agentId: 'J. Park', timestamp: '2026-03-14T09:10:00Z' },
+    { solution: 'clear browser cache', env: 'Chrome 122/Win11/Okta', agentId: 'A. Chen', timestamp: '2026-03-21T14:22:00Z' },
+    { solution: 'clear browser cache', env: 'Chrome 122/Win11/Okta', agentId: 'L. Torres', timestamp: '2026-04-01T11:05:00Z' },
+    { solution: 'disable browser extensions', env: 'Chrome 122/Win11/Okta', agentId: 'A. Chen', timestamp: '2026-03-21T15:00:00Z' },
+    { solution: 'reset password', env: 'Chrome 122/Win11/Okta', agentId: 'J. Park', timestamp: '2026-03-14T10:00:00Z' },
+  ];
+
+  demoFailures.forEach((f, i) => {
+    const key = `failure:${normalizedScopedId}:${f.solution.replace(/\s+/g, '-')}:${i}`;
+    memoryStore.set(key, {
+      solution: f.solution,
+      environment: f.env,
+      agentId: f.agentId,
+      timestamp: f.timestamp,
+      outcome: 'failed',
+      tags: [normalizedScopedId, 'failure', 'demo'],
+      count: 1,
+    });
+
+    storeMemory({
+      key,
+      value: {
+        ...f,
+        customerId: normalizedScopedId,
+        outcome: 'failed',
+      },
+      tags: [normalizedScopedId, 'failure', 'demo'],
+      skipInMemory: true,
+    }).catch(() => {});
+  });
+
+  console.log('[Hindsight] Seeded', demoFailures.length, 'scoped demo memories for', normalizedScopedId);
+}
+
+function ensureScopedData(customerId) {
+  const normalizedId = String(customerId || '').toLowerCase().trim();
+  if (!normalizedId) return;
+  if (normalizedId.startsWith('demo-')) {
+    seedScopedDemoData(normalizedId);
+  }
+}
+
 seedDemoData();
 
-module.exports = { storeMemory, queryFailures, getMemoryProfile };
+module.exports = { storeMemory, queryFailures, getMemoryProfile, rankAlternatives, ensureScopedData };
