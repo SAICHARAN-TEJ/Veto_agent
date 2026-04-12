@@ -162,15 +162,14 @@ Notice how Veto's Hindsight engine instantly analyzes the text, queries the memo
 > **![Veto Intercept Overlay](docs/images/03-veto-intercept.png)**
 > *Veto blocks the response, flashing a warning: "Conflict Detected! Customer already tried clearing cache on April 1st with agent L. Torres."*
 
-### Step 4: Explore Ranked Alternatives
+### Step 4: Explore Recommended Fix
 Once Veto blocks the redundant solution, it automatically queries Hindsight for alternative solutions that have a higher probability of success for this specific customer and environment.
 
-Look at the **Suggested Alternatives** panel. Veto will recommend:
-1. **Force SSO token refresh** (Ranked #1, Highest historical success for Okta/Chrome loops)
-2. **Clear Okta session cookies specifically** (Ranked #2)
+Look at the **RECOMMENDED** panel inside the intercept overlay. Veto will suggest the top-ranked alternative:
+**SSO token refresh via admin panel — navigate to Admin → Users → Meridian Corp → Force SSO token refresh** (Highest historical success)
 
 > **![Ranked Alternatives Panel](docs/images/04-ranked-alternatives.png)**
-> *The sidebar displaying ranked alternatives, complete with success rates and environment matching scores.*
+> *The Veto overlay displaying the recommended alternative, complete with its confidence score.*
 
 ### Step 5: View the Memory Trace
 Click the **"View AI Reasoning"** or **"Memory Trace"** button to see exactly how Veto reached this conclusion. The trace shows the Groq LLM extracting "clear cache" from your draft, the Hindsight similarity search matching it to the April 1st failure, and the ranking algorithm prioritizing the token refresh.
