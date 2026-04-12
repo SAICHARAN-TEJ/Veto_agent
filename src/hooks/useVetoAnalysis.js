@@ -24,6 +24,9 @@ export function useVetoAnalysis() {
         customerId,
         environment,
         mode: getModeFromUrl(),
+      }, {
+        // Groq + Hindsight cloud calls can exceed the default 10s client timeout.
+        timeout: 30_000,
       });
       return data;
     },

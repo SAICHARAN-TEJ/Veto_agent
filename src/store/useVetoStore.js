@@ -105,6 +105,9 @@ export const useVetoStore = create((set, get) => ({
   setActiveTicket: (id) => set({ activeTicketId: id, draft: '', overlayVisible: false, conflictData: null, traceLog: [] }),
   setFilter: (filter) => set({ filter }),
   setDraft: (draft) => set({ draft }),
+  setTickets: (updater) => set((state) => ({
+    tickets: typeof updater === 'function' ? updater(state.tickets) : updater,
+  })),
 
   showOverlay: (data) => set({ overlayVisible: true, conflictData: data }),
   hideOverlay: () => set({ overlayVisible: false, conflictData: null }),

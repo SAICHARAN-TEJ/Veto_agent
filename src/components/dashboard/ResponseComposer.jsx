@@ -1,14 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { useVetoStore } from '../../store/useVetoStore.js';
 import { useVetoAnalysis } from '../../hooks/useVetoAnalysis.js';
+import { useSuggest } from '../../hooks/useSuggest.js';
+import SuggestionStrip from './SuggestionStrip.jsx';
 
 export default function ResponseComposer() {
   const activeTicketId = useVetoStore((s) => s.activeTicketId);
   const getActiveTicket = useVetoStore((s) => s.getActiveTicket);
   const draft = useVetoStore((s) => s.draft);
   const setDraft = useVetoStore((s) => s.setDraft);
+  const setTickets = useVetoStore((s) => s.setTickets);
+  const hideOverlay = useVetoStore((s) => s.hideOverlay);
+  const addTraceEntry = useVetoStore((s) => s.addTraceEntry);
   const ticket = getActiveTicket();
   const { analyze, isPending } = useVetoAnalysis();
+  const [sending, setSending] = useState(false);
+  const { suggestions, loading: suggestionsLoading } = useSuggest(
+    ticket?.customer?.id,
+    draft,
+    ticket?.customer?.environment
+  );
 
   const handleChange = (e) => {
     const val = e.target.value;
@@ -20,6 +31,53 @@ export default function ResponseComposer() {
         customerId: ticket.customer.id,
         environment: ticket.customer.environment,
       });
+    }
+  };
+
+  const handleSuggestionSelect = (solution) => {
+    const selected = String(solution || '').trim();
+    if (!selected) return;
+    const nextDraft = (draft && draft.trim().length > 0) ? `${draft}\n${selected}` : selected;
+    setDraft(nextDraft);
+  };
+
+  const handleSend = async () => {
+    const message = String(draft || '').trim();
+    if (!ticket || !message || sending) return;
+
+    setSending(true);
+    try {
+      const nextHistory = [
+        ...ticket.history,
+        {
+          agent: 'You',
+          message,
+          ts: new Date().toISOString().replace('T', ' ').slice(0, 16),
+          outcome: 'sent',
+        },
+      ];
+
+      setTickets((currentTickets) =>
+        currentTickets.map((item) => {
+          if (item.id !== ticket.id) return item;
+          const wasResolved = item.status === 'resolved';
+          return {
+            ...item,
+            history: nextHistory,
+            status: wasResolved ? 'resolved' : 'resolved',
+            customer: {
+              ...item.customer,
+              openTickets: Math.max(0, Number(item.customer?.openTickets || 0) - (wasResolved ? 0 : 1)),
+            },
+          };
+        })
+      );
+
+      addTraceEntry({ msg: '✓ Response sent and ticket marked as resolved' });
+      hideOverlay();
+      setDraft('');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -125,6 +183,12 @@ export default function ResponseComposer() {
           }}
         />
 
+        <SuggestionStrip
+          suggestions={draft.trim().length >= 8 ? suggestions : []}
+          loading={suggestionsLoading}
+          onSelect={handleSuggestionSelect}
+        />
+
         {/* Send bar */}
         <div style={{
           padding: '12px 20px',
@@ -136,16 +200,19 @@ export default function ResponseComposer() {
             {draft.length} chars
           </div>
           <button
+            type="button"
+            onClick={handleSend}
+            disabled={draft.length === 0 || sending}
             style={{
-              background: draft.length > 0 ? 'var(--accent)' : 'var(--border)',
-              color: draft.length > 0 ? '#0C0C0C' : 'var(--text-secondary)',
+              background: draft.length > 0 && !sending ? 'var(--accent)' : 'var(--border)',
+              color: draft.length > 0 && !sending ? '#0C0C0C' : 'var(--text-secondary)',
               border: 'none', padding: '8px 20px', borderRadius: 0,
               fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
-              letterSpacing: '0.08em', cursor: draft.length > 0 ? 'pointer' : 'not-allowed',
+              letterSpacing: '0.08em', cursor: draft.length > 0 && !sending ? 'pointer' : 'not-allowed',
               transition: 'all 200ms ease',
             }}
           >
-            SEND RESPONSE
+            {sending ? 'SENDING…' : 'SEND RESPONSE'}
           </button>
         </div>
       </div>
