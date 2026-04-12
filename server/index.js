@@ -15,6 +15,7 @@ try {
 const app = express();
 const PORT = process.env.PORT || 3001;
 const DEFAULT_DEMO_CUSTOMER_ID = 'meridian-corp';
+const outboundMessageStore = new Map();
 
 const FALLBACK_SOLUTIONS = [
   {
@@ -549,6 +550,45 @@ app.post('/api/resolve', async (req, res) => {
   } catch (err) {
     console.error('Error in /api/resolve:', err);
     res.status(500).json({ error: 'Failed to resolve alternatives' });
+  }
+});
+
+// POST /api/send - Mock outbound send with in-memory persistence
+app.post('/api/send', async (req, res) => {
+  try {
+    const { mode, customerId, scopedCustomerId } = resolveRequestContext(req.body);
+    const ticketId = String(req.body?.ticketId || '').trim();
+    const message = String(req.body?.message || '').trim();
+
+    if (!ticketId || !customerId || !message) {
+      return res.status(400).json({
+        error: 'ticketId, customerId/customer_id, and message are required',
+      });
+    }
+
+    const persistedEntry = {
+      ticketId,
+      customerId,
+      customerScope: scopedCustomerId,
+      mode,
+      message,
+      sentBy: 'agent',
+      sentAt: new Date().toISOString(),
+    };
+
+    const existing = outboundMessageStore.get(ticketId) || [];
+    outboundMessageStore.set(ticketId, [...existing, persistedEntry]);
+
+    return res.json({
+      success: true,
+      ticketId,
+      sentAt: persistedEntry.sentAt,
+      messageCount: outboundMessageStore.get(ticketId).length,
+      provider: 'mock-outbound',
+    });
+  } catch (err) {
+    console.error('Error in /api/send:', err);
+    return res.status(500).json({ error: 'Failed to send outbound response' });
   }
 });
 

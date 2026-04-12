@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useVetoStore } from '../../store/useVetoStore.js';
 import { useVetoAnalysis } from '../../hooks/useVetoAnalysis.js';
 import { useSuggest } from '../../hooks/useSuggest.js';
 import SuggestionStrip from './SuggestionStrip.jsx';
+import api from '../../lib/api.js';
+
+const TOAST_DURATION_MS = 2800;
 
 export default function ResponseComposer() {
   const activeTicketId = useVetoStore((s) => s.activeTicketId);
@@ -15,11 +18,34 @@ export default function ResponseComposer() {
   const ticket = getActiveTicket();
   const { analyze, isPending } = useVetoAnalysis();
   const [sending, setSending] = useState(false);
+  const [toast, setToast] = useState(null);
+  const toastTimerRef = useRef(null);
   const { suggestions, loading: suggestionsLoading } = useSuggest(
     ticket?.customer?.id,
     draft,
     ticket?.customer?.environment
   );
+
+  const showToast = (type, message) => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+
+    setToast({ type, message });
+    toastTimerRef.current = setTimeout(() => {
+      setToast((current) => (current && current.message === message ? null : current));
+      toastTimerRef.current = null;
+    }, TOAST_DURATION_MS);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = (e) => {
     const val = e.target.value;
@@ -47,12 +73,23 @@ export default function ResponseComposer() {
 
     setSending(true);
     try {
+      const { data } = await api.post('/api/send', {
+        ticketId: ticket.id,
+        customerId: ticket.customer.id,
+        message,
+        mode: typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'true'
+          ? 'demo'
+          : 'live',
+      }, {
+        timeout: 15_000,
+      });
+
       const nextHistory = [
         ...ticket.history,
         {
           agent: 'You',
           message,
-          ts: new Date().toISOString().replace('T', ' ').slice(0, 16),
+          ts: String(data?.sentAt || new Date().toISOString()).replace('T', ' ').slice(0, 16),
           outcome: 'sent',
         },
       ];
@@ -64,7 +101,7 @@ export default function ResponseComposer() {
           return {
             ...item,
             history: nextHistory,
-            status: wasResolved ? 'resolved' : 'resolved',
+            status: 'resolved',
             customer: {
               ...item.customer,
               openTickets: Math.max(0, Number(item.customer?.openTickets || 0) - (wasResolved ? 0 : 1)),
@@ -74,8 +111,14 @@ export default function ResponseComposer() {
       );
 
       addTraceEntry({ msg: '✓ Response sent and ticket marked as resolved' });
+      showToast('success', 'Response sent successfully');
       hideOverlay();
       setDraft('');
+    } catch (error) {
+      const apiMessage = error?.response?.data?.error;
+      const messageText = apiMessage || 'Failed to send response. Try again.';
+      addTraceEntry({ msg: `✗ Send failed: ${messageText}` });
+      showToast('error', messageText);
     } finally {
       setSending(false);
     }
@@ -169,6 +212,24 @@ export default function ResponseComposer() {
             </span>
           )}
         </div>
+
+        {toast && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              padding: '8px 20px',
+              borderBottom: '1px solid var(--border)',
+              background: toast.type === 'success' ? 'rgba(0,200,81,0.08)' : 'rgba(255,59,59,0.08)',
+              color: toast.type === 'success' ? '#00C851' : '#FF3B3B',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              letterSpacing: '0.06em',
+            }}
+          >
+            {toast.message}
+          </div>
+        )}
 
         <textarea
           value={draft}
