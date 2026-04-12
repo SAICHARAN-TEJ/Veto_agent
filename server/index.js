@@ -2,10 +2,8 @@ require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const express = require('express');
 const cors = require('cors');
-
-const memoryRoutes = require('./routes/memory');
-const conflictRoutes = require('./routes/conflict');
-const ticketsRoutes = require('./routes/tickets');
+const Groq = require('./lib/groq');
+const Hindsight = require('./lib/hindsight');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -48,9 +46,54 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
-app.use('/api', memoryRoutes);
-app.use('/api', conflictRoutes);
-app.use('/api', ticketsRoutes);
+
+// POST /api/analyze - Extract solutions from agent draft
+app.post('/api/analyze', async (req, res) => {
+  try {
+    const { customer_id, draft_response, environment } = req.body;
+    
+    if (!customer_id || !draft_response) {
+      return res.status(400).json({ error: 'customer_id and draft_response required' });
+    }
+
+    const solutions = await Groq.extractSolutions(draft_response);
+    const conflicts = await Hindsight.queryMemory(customer_id, solutions);
+
+    res.json({
+      success: true,
+      extracted_solutions: solutions,
+      memory_conflicts: conflicts,
+      blocking_alert: conflicts.length > 0,
+    });
+  } catch (err) {
+    console.error('Error in /api/analyze:', err);
+    res.status(500).json({ error: 'Failed to analyze draft' });
+  }
+});
+
+// POST /api/resolve - Get alternative solutions
+app.post('/api/resolve', async (req, res) => {
+  try {
+    const { customer_id, failed_solutions, environment, ticket_context } = req.body;
+    
+    if (!customer_id || !failed_solutions || !Array.isArray(failed_solutions)) {
+      return res.status(400).json({ error: 'customer_id and failed_solutions array required' });
+    }
+
+    const alternatives = await Groq.generateAlternatives(failed_solutions, ticket_context);
+    const ranked = await Hindsight.rankAlternatives(alternatives, environment);
+
+    res.json({
+      success: true,
+      alternatives: ranked,
+      customer_memory_score: 0,
+      recommended_followup: 'Monitor success rate of selected solution',
+    });
+  } catch (err) {
+    console.error('Error in /api/resolve:', err);
+    res.status(500).json({ error: 'Failed to resolve alternatives' });
+  }
+});
 
 // 404
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
