@@ -368,6 +368,7 @@ Notes:
 - Do **not** set `VITE_API_URL` on Render for single-service deployment; frontend should use same-origin `/api`.
 - Render injects `PORT`; backend already binds `process.env.PORT`.
 - Blueprint uses Node `20.18.1` for stable LTS compatibility.
+- If `VITE_API_URL` is accidentally set to localhost in cloud, frontend now safely falls back to same-origin `/api`.
 
 ---
 
