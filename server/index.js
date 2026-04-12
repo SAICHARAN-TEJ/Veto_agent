@@ -1,4 +1,8 @@
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+try {
+  require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+} catch (error) {
+  console.warn('[Config] dotenv not found; continuing with environment variables only');
+}
 
 const express = require('express');
 const cors = require('cors');
