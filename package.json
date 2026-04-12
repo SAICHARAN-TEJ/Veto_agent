@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.28.0",
+    "@vectorize-io/hindsight-client": "^0.5.0",
     "axios": "^1.6.8",
     "framer-motion": "^11.1.5",
     "groq-sdk": "^0.3.3",

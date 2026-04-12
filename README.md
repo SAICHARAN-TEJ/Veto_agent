@@ -53,131 +53,80 @@ The frontend provides the user interface:
 - Memory Intelligence Brief: A real-time side-panel showing customer frustration levels and failure history.
 - Conflict Overlay: A high-visibility alert system that blocks redundant responses and offers actionable alternatives.
 
-## Installation
+## Installation & Running Locally
 
 ### Prerequisites
 
 - Node.js version 18 or higher
-- Groq API Key (available at console.groq.com)
-- Hindsight API Key (or use the built-in mock mode for development)
+- Groq API Key (Available at [console.groq.com](https://console.groq.com/))
+- *[Optional]* Docker (If you wish to run the real Hindsight memory backend; otherwise an in-memory fallback is used)
 
-### Backend Setup
+### 1. Project Setup
 
-Navigate to the backend directory:
+Since this is a full-stack monorepo, both the React frontend and Express backend share dependencies.
 
-```
-cd backend
-```
-
-Install dependencies:
-
-```
+```bash
+# Install all dependencies at the project root
 npm install
 ```
 
-Create your environment file:
+### 2. Configure Environment Variables
 
-```
-cp .env.example .env
+```bash
+# The .env file has already been prepared with placeholders
+# Open the .env file and set your API key:
 ```
 
-Open the .env file and fill in your API keys:
-
-```
+Edit your `.env` to include:
+```env
 GROQ_API_KEY=your_groq_api_key_here
-HINDSIGHT_API_KEY=your_hindsight_api_key_here
-HINDSIGHT_BASE_URL=https://api.hindsight.ai
-HINDSIGHT_BANK_ID=your_bank_id_here
+HINDSIGHT_URL=http://localhost:8888
+VITE_API_URL=http://localhost:3001
 ```
 
-Start the backend server:
+### 3. Start the VETO System
 
-```
-npm start
-```
+Start both the backend server and frontend application simultaneously using Vite and concurrently:
 
-The backend will run on http://localhost:5000
-
-### Frontend Setup
-
-Open a new terminal and navigate to the frontend directory:
-
-```
-cd frontend
-```
-
-Install dependencies:
-
-```
-npm install
-```
-
-Create your environment file:
-
-```
-cp .env.example .env
-```
-
-Open the .env file and set the API base URL:
-
-```
-VITE_API_BASE=http://localhost:5000
-```
-
-Start the development server:
-
-```
+```bash
 npm run dev
 ```
 
-The frontend will run on http://localhost:5173
+- The React application will run on `http://localhost:5173`
+- The Express/Groq backend will run on `http://localhost:3001`
+- Add `?demo=true` to your URL to see the system autonomously working on the Meridian Corp scenario.
+
+### 4. Running the Hindsight Memory Bank (Docker)
+
+VETO is fully integrated with the official `@vectorize-io/hindsight-client`. If you want true biomimetic memory persistence rather than the in-memory fallback, you need to run Hindsight locally:
+
+```bash
+docker run --rm -it --pull always -p 8888:8888 -p 9999:9999 \
+  -e HINDSIGHT_API_LLM_PROVIDER=groq \
+  -e HINDSIGHT_API_LLM_API_KEY=your_groq_api_key_here \
+  ghcr.io/vectorize-io/hindsight:latest
+```
 
 ## Project Structure
 
-```
+```text
 veto-agent/
-├── backend/
-│   ├── src/
-│   │   ├── config/
-│   │   │   └── index.js          # Configuration management
-│   │   ├── data/
-│   │   │   └── seed.js           # Mock data for development
-│   │   ├── routes/
-│   │   │   ├── brief.js          # Customer brief endpoint
-│   │   │   ├── memory.js         # Memory write endpoint
-│   │   │   ├── suggest.js        # Solution suggestion endpoint
-│   │   │   └── veto.js           # Veto check endpoint
-│   │   ├── services/
-│   │   │   ├── groq.js            # Groq AI integration
-│   │   │   ├── hindsight.js       # Memory store integration
-│   │   │   └── veto-engine.js     # Core veto logic
-│   │   ├── utils/
-│   │   │   └── asyncHandler.js   # Error handling utility
-│   │   └── index.js              # Express server setup
-│   ├── .env.example
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── CustomerBrief.jsx     # Customer intelligence panel
-│   │   │   ├── MemoryTraceView.jsx   # AI reasoning visualization
-│   │   │   ├── SupportConsole.jsx     # Main console interface
-│   │   │   ├── TicketClose.jsx        # Ticket closing modal
-│   │   │   └── VetoOverlay.jsx       # Conflict alert component
-│   │   ├── data/
-│   │   │   └── mockTickets.js        # Demo ticket data
-│   │   ├── hooks/
-│   │   │   ├── useCustomerBrief.js   # Customer data hook
-│   │   │   └── useVeto.js            # Veto check hook
-│   │   ├── styles/
-│   │   │   └── index.css             # Professional dark theme
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── .env.example
-│   ├── index.html
-│   ├── package.json
-│   └── vite.config.js
-├── .gitignore
+├── server/                 # Express Backend
+│   ├── lib/
+│   │   ├── groq.js         # Solution extraction via LLaMA3
+│   │   └── hindsight.js    # Hindsight client integration & fallback
+│   ├── routes/             # API Endpoints (/analyze, /resolve)
+│   └── index.js            # Express server entry
+├── src/                    # React Frontend
+│   ├── components/         # Dashboard & Landing sections
+│   ├── pages/              # Landing.jsx, Dashboard.jsx
+│   ├── store/              # Zustand global state management
+│   ├── index.css           # Global design system & theme vars
+│   ├── App.jsx             # React Router setup
+│   └── main.jsx            # React root
+├── .env                    # Environment API keys
+├── package.json            # Unified dependencies
+├── vite.config.js          # Vite config w/ backend proxy
 └── README.md
 ```
 
