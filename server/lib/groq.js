@@ -1,23 +1,35 @@
+/**
+ * Groq LLM — Solution extraction from agent drafts
+ *
+ * Uses the Groq cloud API with the gsk_ API key.
+ * Falls back to regex-based keyword extraction if Groq is unavailable.
+ */
+
 const Groq = require('groq-sdk');
 
 let groq = null;
 
 function getGroq() {
   if (!groq && process.env.GROQ_API_KEY) {
-    groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    try {
+      groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+      console.log('[Groq] ✓ Client initialized with API key:', process.env.GROQ_API_KEY.slice(0, 8) + '...');
+    } catch (err) {
+      console.error('[Groq] Failed to initialize:', err.message);
+    }
   }
   return groq;
 }
 
 /**
- * Extract proposed solutions from an agent draft using Groq.
- * Falls back to keyword matching if Groq is not configured.
+ * Extract proposed solutions from an agent draft using Groq LLM.
+ * Falls back to keyword matching if Groq is not configured or errors.
  */
 async function extractSolutions(draft) {
   const client = getGroq();
 
   if (!client) {
-    // Fallback: keyword-based extraction
+    console.log('[Groq] No API key — using local extraction fallback');
     return extractSolutionsLocal(draft);
   }
 
@@ -39,12 +51,14 @@ async function extractSolutions(draft) {
     });
 
     const raw = chat.choices[0]?.message?.content?.trim() || '[]';
+    console.log('[Groq] ✓ Extracted solutions from draft via LLM:', raw);
+
     // Parse bracketed JSON safely
     const match = raw.match(/\[[\s\S]*\]/);
     if (match) return JSON.parse(match[0]);
     return extractSolutionsLocal(draft);
   } catch (err) {
-    console.error('[Groq] extraction error:', err.message);
+    console.error('[Groq] Extraction error:', err.message);
     return extractSolutionsLocal(draft);
   }
 }
