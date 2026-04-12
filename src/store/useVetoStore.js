@@ -33,7 +33,10 @@ const DEMO_TICKETS = [
     issue: 'API rate limiting errors on bulk import',
     tag: 'API',
     status: 'active',
-    history: [],
+    history: [
+      { agent: 'M. Singh', message: 'Can you retry the import after waiting 10 minutes?', ts: '2026-04-09 10:18', outcome: 'failed' },
+      { agent: 'R. Diaz', message: 'Please reduce import size to 5k rows per batch.', ts: '2026-04-10 12:03', outcome: 'failed' },
+    ],
     customer: {
       id: 'praxis-systems',
       name: 'Praxis Systems',
@@ -51,7 +54,10 @@ const DEMO_TICKETS = [
     issue: 'Dashboard not loading after recent update',
     tag: 'Dashboard',
     status: 'resolved',
-    history: [],
+    history: [
+      { agent: 'K. Ito', message: 'Try a hard refresh and clear local app cache.', ts: '2026-04-08 09:42', outcome: 'success' },
+      { agent: 'K. Ito', message: 'Issue confirmed resolved after cache reset and re-login.', ts: '2026-04-08 10:05', outcome: 'sent' },
+    ],
     customer: {
       id: 'volta-analytics',
       name: 'Volta Analytics',
@@ -69,7 +75,10 @@ const DEMO_TICKETS = [
     issue: 'Two-factor auth codes not being received',
     tag: 'Authentication',
     status: 'flagged',
-    history: [],
+    history: [
+      { agent: 'P. Novak', message: 'Please check spam folder and whitelist noreply sender.', ts: '2026-04-10 14:33', outcome: 'failed' },
+      { agent: 'S. Roy', message: 'Resent verification email and forced MFA sync.', ts: '2026-04-11 08:11', outcome: 'failed' },
+    ],
     customer: {
       id: 'nexus-financial',
       name: 'Nexus Financial',

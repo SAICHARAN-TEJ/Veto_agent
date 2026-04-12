@@ -122,6 +122,13 @@ Recommendations filtered by:
 - Soft-fail with graceful degradation
 - Non-blocking suggestion panel
 
+### 6. 💡 Composer Smart Suggestions
+- Suggestions appear directly in the **YOUR RESPONSE** composer area
+- Ticket-context suggestions appear immediately (before typing)
+- Requests are debounced by 500ms and become draft-aware after typing at least 8 characters
+- Suggestions are stacked vertically (one per row) for better readability
+- Clicking a suggestion appends it to the draft response
+
 ### 5. 🔄 Hindsight Integration
 - Cloud memory integration via Hindsight API
 - Local in-memory fallback when API keys are unavailable
@@ -303,6 +310,11 @@ npm run server:dev
 npm run dev        # Frontend (Vite)
 npm run server:dev # Backend (Express)
 ```
+
+Notes:
+- Open the app at `http://localhost:5173/app`
+- Smart Suggestions show immediately from ticket context, and switch to draft-aware results at **8+ characters**
+- If you want demo-scoped memory behavior, use `http://localhost:5173/?demo=true`
 
 ### Production Build
 
@@ -502,8 +514,19 @@ curl http://localhost:3001/health
 
 # Kill and restart
 npx kill-port 3001
-cd server && npm start
+npm run server:dev
 ```
+
+### "Suggestions disappear after refresh"
+This is expected if you were relying on unsent draft text. Refresh resets in-memory draft state.
+
+What persists after refresh:
+- Ticket history seeded in the store (all demo tickets)
+- Previously sent responses (when you click **SEND RESPONSE**, they are appended to ticket history)
+
+What to do:
+- Re-select the ticket if needed
+- Suggestions should already show from ticket context; type at least 8 characters in **YOUR RESPONSE** to refine them based on your draft
 
 ### "Port already in use"
 ```bash

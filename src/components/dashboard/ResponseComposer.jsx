@@ -245,12 +245,12 @@ export default function ResponseComposer() {
         />
 
         <SuggestionStrip
-          suggestions={draft.trim().length >= 8 ? suggestions : []}
-          loading={draft.trim().length >= 8 ? suggestionsLoading : false}
+          suggestions={draft.trim().length === 0 || draft.trim().length >= 8 ? suggestions : []}
+          loading={suggestionsLoading}
           onSelect={handleSuggestionSelect}
         />
 
-        {draft.trim().length < 8 && (
+        {draft.trim().length === 0 && (
           <div
             style={{
               padding: '0 20px 8px',
@@ -261,7 +261,22 @@ export default function ResponseComposer() {
               letterSpacing: '0.06em',
             }}
           >
-            SMART SUGGESTIONS — type at least 8 characters to see recommendations
+            SMART SUGGESTIONS — showing recommended next steps for this ticket
+          </div>
+        )}
+
+        {draft.trim().length > 0 && draft.trim().length < 8 && (
+          <div
+            style={{
+              padding: '0 20px 8px',
+              borderBottom: '1px solid var(--border)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              color: 'var(--text-secondary)',
+              letterSpacing: '0.06em',
+            }}
+          >
+            SMART SUGGESTIONS — keep typing (8+ chars) for draft-aware recommendations
           </div>
         )}
 

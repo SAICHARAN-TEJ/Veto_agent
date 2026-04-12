@@ -36,9 +36,27 @@ export function useSuggest(customerId, draft, environment) {
   useEffect(() => {
     let cancelled = false;
     const normalizedDraft = String(debouncedDraft || '');
+    const prefillQuery = [
+      environment?.sso,
+      environment?.browser,
+      environment?.os,
+      'recommended next step',
+    ]
+      .map((value) => String(value || '').trim())
+      .filter(Boolean)
+      .join(' ');
 
     async function fetchSuggestions() {
-      if (!customerId || normalizedDraft.trim().length < 8) {
+      if (!customerId) {
+        setSuggestions([]);
+        setLoading(false);
+        return;
+      }
+
+      const hasDraft = normalizedDraft.trim().length > 0;
+      const queryDraft = hasDraft ? normalizedDraft : prefillQuery;
+
+      if (!queryDraft || (hasDraft && normalizedDraft.trim().length < 8)) {
         setSuggestions([]);
         setLoading(false);
         return;
@@ -48,7 +66,7 @@ export function useSuggest(customerId, draft, environment) {
       try {
         const { data } = await api.post('/api/suggest', {
           customerId,
-          draft: normalizedDraft,
+          draft: queryDraft,
           environment: environment || {},
           mode: (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'true')
             ? 'demo'

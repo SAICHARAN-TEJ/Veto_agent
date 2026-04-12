@@ -26,8 +26,8 @@ export default function SuggestionStrip({ suggestions, loading, onSelect }) {
         marginTop: 0,
         padding: '0 20px 8px',
         display: 'flex',
+        flexDirection: 'column',
         gap: 8,
-        overflowX: 'auto',
         borderBottom: '1px solid var(--border)',
       }}
     >
@@ -78,19 +78,20 @@ export default function SuggestionStrip({ suggestions, loading, onSelect }) {
           type="button"
           onClick={() => onSelect(item.solution)}
           style={{
-            flex: '0 0 auto',
+            width: '100%',
             background: '#12161C',
             color: 'var(--text-primary)',
             border: '1px solid var(--border)',
             borderLeft: '3px solid #00C851',
-            borderRadius: 999,
-            padding: '7px 10px',
+            borderRadius: 4,
+            padding: '8px 10px',
             fontFamily: 'var(--font-mono)',
             fontSize: 10,
             lineHeight: 1.3,
             cursor: 'pointer',
             transition: 'background 160ms ease, border-color 160ms ease',
-            whiteSpace: 'nowrap',
+            whiteSpace: 'normal',
+            textAlign: 'left',
           }}
           onMouseEnter={(event) => {
             event.currentTarget.style.background = '#1A2029';
@@ -102,7 +103,7 @@ export default function SuggestionStrip({ suggestions, loading, onSelect }) {
           }}
           title={item.solution}
         >
-          {truncateText(item.solution, 60)} · {toPercentage(item.successRate)}
+          {truncateText(item.solution, 92)} · {toPercentage(item.successRate)}
         </button>
       ))}
     </div>
