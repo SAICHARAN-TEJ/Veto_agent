@@ -130,6 +130,56 @@ Recommendations filtered by:
 
 ---
 
+## 🚀 Interactive Demo Walkthrough
+
+Experiencing Veto in action is the best way to understand the power of Hindsight memory. Follow these steps to run the interactive demo locally.
+
+### Step 1: Launch Demo Mode
+Start the application and navigate to the demo URL to activate the isolated `demo-meridian-corp` memory scope. This prevents demo data from polluting your live production database.
+
+```bash
+# Ensure both frontend and backend are running
+http://localhost:5173/?demo=true
+```
+
+> **![Screenshot Placeholder: Dashboard in Demo Mode](docs/images/01-demo-dashboard.png)**
+> *The Veto dashboard loads with the Demo Mode indicator active, showing the simulated support queue.*
+
+### Step 2: Select the "Meridian Corp" Ticket
+In the simulated support queue, click on the active ticket for **Meridian Corp**. The ticket describes an issue where the user is stuck in a login loop during the SSO flow after a password reset.
+
+> **![Screenshot Placeholder: Ticket Selection](docs/images/02-ticket-selection.png)**
+> *The Meridian Corp ticket details and environment context (Windows 11, Chrome 122, Okta SSO).*
+
+### Step 3: Trigger the Intercept (The "Aha!" Moment)
+As a support agent, type a standard (but previously failed) response into the reply box. 
+
+Type exactly this:
+> *"Have you tried clearing your browser cache and trying again?"*
+
+Notice how Veto's Hindsight engine instantly analyzes the text, queries the memory bank for `demo-meridian-corp`, and intercepts the response.
+
+> **![Screenshot Placeholder: Veto Intercept Overlay](docs/images/03-veto-intercept.png)**
+> *Veto blocks the response, flashing a warning: "Conflict Detected! Customer already tried clearing cache on April 1st with agent L. Torres."*
+
+### Step 4: Explore Ranked Alternatives
+Once Veto blocks the redundant solution, it automatically queries Hindsight for alternative solutions that have a higher probability of success for this specific customer and environment.
+
+Look at the **Suggested Alternatives** panel. Veto will recommend:
+1. **Force SSO token refresh** (Ranked #1, Highest historical success for Okta/Chrome loops)
+2. **Clear Okta session cookies specifically** (Ranked #2)
+
+> **![Screenshot Placeholder: Ranked Alternatives Panel](docs/images/04-ranked-alternatives.png)**
+> *The sidebar displaying ranked alternatives, complete with success rates and environment matching scores.*
+
+### Step 5: View the Memory Trace
+Click the **"View AI Reasoning"** or **"Memory Trace"** button to see exactly how Veto reached this conclusion. The trace shows the Groq LLM extracting "clear cache" from your draft, the Hindsight similarity search matching it to the April 1st failure, and the ranking algorithm prioritizing the token refresh.
+
+> **![Screenshot Placeholder: Memory Trace Visualization](docs/images/05-memory-trace.png)**
+> *The transparency panel showing the step-by-step Groq extraction and Hindsight memory matching process.*
+
+---
+
 ## Architecture
 
 ### System Diagram
