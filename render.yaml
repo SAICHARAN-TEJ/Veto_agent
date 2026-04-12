@@ -4,12 +4,12 @@ services:
     env: node
     plan: free
     autoDeploy: true
-    buildCommand: npm ci && npm --prefix server ci && npm run build
+    buildCommand: npm ci --include=dev && npm --prefix server ci && npm run build
     startCommand: npm run server
     healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
-        value: 22.11.0
+        value: 20.18.1
       - key: NODE_ENV
         value: production
       - key: GROQ_API_KEY

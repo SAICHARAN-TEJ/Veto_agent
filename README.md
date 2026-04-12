@@ -353,7 +353,7 @@ This repo is configured for Render via `render.yaml`.
 1. Push your latest `main` branch to GitHub.
 2. In Render, choose **New + → Blueprint** and select this repository.
 3. Render will use:
-   - `buildCommand`: `npm ci && npm --prefix server ci && npm run build`
+   - `buildCommand`: `npm ci --include=dev && npm --prefix server ci && npm run build`
    - `startCommand`: `npm run server`
    - `healthCheckPath`: `/health`
 4. Add environment variables in Render:
@@ -367,6 +367,7 @@ This repo is configured for Render via `render.yaml`.
 Notes:
 - Do **not** set `VITE_API_URL` on Render for single-service deployment; frontend should use same-origin `/api`.
 - Render injects `PORT`; backend already binds `process.env.PORT`.
+- Blueprint uses Node `20.18.1` for stable LTS compatibility.
 
 ---
 
