@@ -159,8 +159,7 @@ Type exactly this:
 
 Notice how Veto's Hindsight engine instantly analyzes the text, queries the memory bank for `demo-meridian-corp`, and intercepts the response.
 
-> **![Veto Intercept Overlay](<img width="754" height="460" alt="image" src="https://github.com/user-attachments/assets/90f71017-5e6d-480d-b597-5224620e6bbd" />
-)**
+> **![Veto Intercept Overlay](docs/images/03-veto-intercept.png)**
 > *Veto blocks the response, flashing a warning: "Conflict Detected! Customer already tried clearing cache on April 1st with agent L. Torres."*
 
 ### Step 4: Explore Recommended Fix
