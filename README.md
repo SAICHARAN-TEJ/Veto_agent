@@ -142,13 +142,13 @@ Start the application and navigate to the demo URL to activate the isolated `dem
 http://localhost:5173/?demo=true
 ```
 
-> **![Screenshot Placeholder: Dashboard in Demo Mode](docs/images/01-demo-dashboard.png)**
+> **![Dashboard in Demo Mode](https://placehold.co/800x400/2a2a2a/ffffff?text=Dashboard+in+Demo+Mode)**
 > *The Veto dashboard loads with the Demo Mode indicator active, showing the simulated support queue.*
 
 ### Step 2: Select the "Meridian Corp" Ticket
 In the simulated support queue, click on the active ticket for **Meridian Corp**. The ticket describes an issue where the user is stuck in a login loop during the SSO flow after a password reset.
 
-> **![Screenshot Placeholder: Ticket Selection](docs/images/02-ticket-selection.png)**
+> **![Ticket Selection](https://placehold.co/800x400/2a2a2a/ffffff?text=Ticket+Selection)**
 > *The Meridian Corp ticket details and environment context (Windows 11, Chrome 122, Okta SSO).*
 
 ### Step 3: Trigger the Intercept (The "Aha!" Moment)
@@ -159,7 +159,7 @@ Type exactly this:
 
 Notice how Veto's Hindsight engine instantly analyzes the text, queries the memory bank for `demo-meridian-corp`, and intercepts the response.
 
-> **![Screenshot Placeholder: Veto Intercept Overlay](docs/images/03-veto-intercept.png)**
+> **![Veto Intercept Overlay](https://placehold.co/800x400/2a2a2a/ffffff?text=Veto+Intercept+Overlay)**
 > *Veto blocks the response, flashing a warning: "Conflict Detected! Customer already tried clearing cache on April 1st with agent L. Torres."*
 
 ### Step 4: Explore Ranked Alternatives
@@ -169,13 +169,13 @@ Look at the **Suggested Alternatives** panel. Veto will recommend:
 1. **Force SSO token refresh** (Ranked #1, Highest historical success for Okta/Chrome loops)
 2. **Clear Okta session cookies specifically** (Ranked #2)
 
-> **![Screenshot Placeholder: Ranked Alternatives Panel](docs/images/04-ranked-alternatives.png)**
+> **![Ranked Alternatives Panel](https://placehold.co/800x400/2a2a2a/ffffff?text=Ranked+Alternatives+Panel)**
 > *The sidebar displaying ranked alternatives, complete with success rates and environment matching scores.*
 
 ### Step 5: View the Memory Trace
 Click the **"View AI Reasoning"** or **"Memory Trace"** button to see exactly how Veto reached this conclusion. The trace shows the Groq LLM extracting "clear cache" from your draft, the Hindsight similarity search matching it to the April 1st failure, and the ranking algorithm prioritizing the token refresh.
 
-> **![Screenshot Placeholder: Memory Trace Visualization](docs/images/05-memory-trace.png)**
+> **![Memory Trace Visualization](https://placehold.co/800x400/2a2a2a/ffffff?text=Memory+Trace+Visualization)**
 > *The transparency panel showing the step-by-step Groq extraction and Hindsight memory matching process.*
 
 ---
