@@ -21,8 +21,10 @@ function FrustrationBar({ score }) {
 }
 
 export default function MemoryBrief() {
-  const getActiveTicket = useVetoStore((s) => s.getActiveTicket);
-  const ticket = getActiveTicket();
+  const ticket = useVetoStore((s) => {
+    const active = s.tickets.find((t) => t.id === s.activeTicketId);
+    return active || null;
+  });
   if (!ticket) return null;
   const { customer } = ticket;
 
