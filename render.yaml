@@ -3,11 +3,15 @@ services:
     name: veto-app
     env: node
     plan: free
-    buildCommand: npm install && npm run build && npm --prefix server install
-    startCommand: node server/index.js
+    autoDeploy: true
+    buildCommand: npm ci && npm --prefix server ci && npm run build
+    startCommand: npm run server
+    healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
         value: 22.11.0
+      - key: NODE_ENV
+        value: production
       - key: GROQ_API_KEY
         sync: false
       - key: HINDSIGHT_API_KEY

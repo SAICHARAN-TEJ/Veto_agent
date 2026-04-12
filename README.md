@@ -282,6 +282,8 @@ VITE_API_URL=http://localhost:3001
 NODE_ENV=development
 ```
 
+> For Render deployment, set `NODE_ENV=production` in Render environment variables.
+
 **Get Groq API Key:**
 1. Visit https://console.groq.com/
 2. Sign up → API Keys section
@@ -342,6 +344,29 @@ docker run --rm -it -p 8888:8888 -p 9999:9999 \
 # Terminal 2: Start Veto
 npm run dev
 ```
+
+## Render Deployment (Single Service)
+
+This repo is configured for Render via `render.yaml`.
+
+### Render Setup
+1. Push your latest `main` branch to GitHub.
+2. In Render, choose **New + → Blueprint** and select this repository.
+3. Render will use:
+   - `buildCommand`: `npm ci && npm --prefix server ci && npm run build`
+   - `startCommand`: `npm run server`
+   - `healthCheckPath`: `/health`
+4. Add environment variables in Render:
+   - `GROQ_API_KEY` (required for Groq-backed reasoning)
+   - `HINDSIGHT_API_KEY` (optional, fallback mode works without it)
+   - `HINDSIGHT_BASE_URL` (default: `https://api.hindsight.vectorize.io`)
+   - `HINDSIGHT_BANK_ID` (default: `veto-customer-support`)
+5. Deploy and verify:
+   - `https://<your-service>.onrender.com/health`
+
+Notes:
+- Do **not** set `VITE_API_URL` on Render for single-service deployment; frontend should use same-origin `/api`.
+- Render injects `PORT`; backend already binds `process.env.PORT`.
 
 ---
 

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="VETO favicon">
+  <rect width="64" height="64" rx="12" fill="#0c0c0c" />
+  <path d="M16 16l10 32h4l10-32h-4l-8 25-8-25h-4z" fill="#e8ff00" />
+  <rect x="41" y="16" width="7" height="7" fill="#e8ff00" />
+</svg>
