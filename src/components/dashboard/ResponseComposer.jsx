@@ -246,9 +246,24 @@ export default function ResponseComposer() {
 
         <SuggestionStrip
           suggestions={draft.trim().length >= 8 ? suggestions : []}
-          loading={suggestionsLoading}
+          loading={draft.trim().length >= 8 ? suggestionsLoading : false}
           onSelect={handleSuggestionSelect}
         />
+
+        {draft.trim().length < 8 && (
+          <div
+            style={{
+              padding: '0 20px 8px',
+              borderBottom: '1px solid var(--border)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              color: 'var(--text-secondary)',
+              letterSpacing: '0.06em',
+            }}
+          >
+            SMART SUGGESTIONS — type at least 8 characters to see recommendations
+          </div>
+        )}
 
         {/* Send bar */}
         <div style={{

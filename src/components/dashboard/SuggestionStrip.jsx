@@ -19,9 +19,6 @@ function toPercentage(rate) {
 
 export default function SuggestionStrip({ suggestions, loading, onSelect }) {
   const items = Array.isArray(suggestions) ? suggestions : [];
-  if (loading || items.length === 0) {
-    return null;
-  }
 
   return (
     <div
@@ -34,6 +31,47 @@ export default function SuggestionStrip({ suggestions, loading, onSelect }) {
         borderBottom: '1px solid var(--border)',
       }}
     >
+      <div
+        style={{
+          flex: '0 0 auto',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          color: 'var(--text-secondary)',
+          letterSpacing: '0.08em',
+          alignSelf: 'center',
+          padding: '0 4px',
+        }}
+      >
+        SMART SUGGESTIONS
+      </div>
+      {loading && (
+        <div
+          style={{
+            flex: '0 0 auto',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: 'var(--accent)',
+            alignSelf: 'center',
+            padding: '0 4px',
+          }}
+        >
+          LOADING…
+        </div>
+      )}
+      {!loading && items.length === 0 && (
+        <div
+          style={{
+            flex: '0 0 auto',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: 'var(--text-secondary)',
+            alignSelf: 'center',
+            padding: '0 4px',
+          }}
+        >
+          No suggestions yet
+        </div>
+      )}
       {items.map((item, index) => (
         <button
           key={`${item.solution}-${index}`}
