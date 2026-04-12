@@ -13,7 +13,7 @@ function getGroq() {
   if (!groq && process.env.GROQ_API_KEY) {
     try {
       groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-      console.log('[Groq] ✓ Client initialized with API key:', process.env.GROQ_API_KEY.slice(0, 8) + '...');
+      console.log('[Groq] ✓ Client initialized with API key');
     } catch (err) {
       console.error('[Groq] Failed to initialize:', err.message);
     }

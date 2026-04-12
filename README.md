@@ -283,7 +283,11 @@ NODE_ENV=development
 ### Step 3: Start Development Servers
 
 ```bash
+# Terminal 1 (frontend)
 npm run dev
+
+# Terminal 2 (backend)
+npm run server:dev
 ```
 
 - **Frontend:** http://localhost:5173
@@ -296,14 +300,15 @@ npm run dev
 ### Development Mode
 
 ```bash
-npm run dev        # Both frontend & backend
+npm run dev        # Frontend (Vite)
+npm run server:dev # Backend (Express)
 ```
 
 ### Production Build
 
 ```bash
 npm run build      # Create optimized build
-npm run serve      # Serve production build
+npm run server     # Serve API + built frontend from one Node process
 ```
 
 ### With Demo Scenario

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: veto-app
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build && npm --prefix server install
+    startCommand: node server/index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 22.11.0
+      - key: GROQ_API_KEY
+        sync: false
+      - key: HINDSIGHT_API_KEY
+        sync: false
+      - key: HINDSIGHT_BASE_URL
+        value: https://api.hindsight.vectorize.io
+      - key: HINDSIGHT_BANK_ID
+        value: veto-customer-support

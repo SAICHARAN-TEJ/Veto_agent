@@ -31,7 +31,6 @@ const hindsightHttp = axios.create({
 
 if (isConfigured) {
   console.log('[Hindsight] Cloud API configured →', HINDSIGHT_BASE_URL);
-  console.log('[Hindsight] API Key:', HINDSIGHT_API_KEY.slice(0, 8) + '...' + HINDSIGHT_API_KEY.slice(-6));
   console.log('[Hindsight] Bank ID:', HINDSIGHT_BANK_ID);
 } else {
   console.warn('[Hindsight] No API key configured — using in-memory fallback only');
@@ -67,7 +66,12 @@ function flattenMetadata(obj) {
 // RETAIN: Store a memory entry
 // ══════════════════════════════════════════════════════════════
 async function storeMemory({ key, value, tags = [], skipInMemory = false }) {
-  const bankId = tags.includes('meridian-corp') ? 'meridian-corp' : HINDSIGHT_BANK_ID;
+  const explicitCustomerId = String(value?.customerId || '').toLowerCase().trim();
+  const taggedScopedId = tags
+    .map((tag) => String(tag || '').toLowerCase().trim())
+    .find((tag) => tag.startsWith('demo-') || tag.startsWith('live-'));
+  const legacyDemoId = tags.includes('meridian-corp') ? 'meridian-corp' : '';
+  const bankId = explicitCustomerId || taggedScopedId || legacyDemoId || HINDSIGHT_BANK_ID;
   const contentText = typeof value === 'string' ? value : JSON.stringify(value);
   const metadata = flattenMetadata({ key, ...value, tags });
 

@@ -2,6 +2,7 @@ require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const Groq = require('./lib/groq');
 const Hindsight = require('./lib/hindsight');
 
@@ -327,6 +328,9 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10kb' }));
 
+const distPath = path.join(__dirname, '..', 'dist');
+app.use(express.static(distPath));
+
 // Security headers
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -590,6 +594,13 @@ app.post('/api/send', async (req, res) => {
     console.error('Error in /api/send:', err);
     return res.status(500).json({ error: 'Failed to send outbound response' });
   }
+});
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path === '/health') {
+    return next();
+  }
+  return res.sendFile(path.join(distPath, 'index.html'));
 });
 
 // 404
